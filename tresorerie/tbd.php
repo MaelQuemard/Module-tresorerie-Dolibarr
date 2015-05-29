@@ -181,6 +181,7 @@ if (isset($_GET['synchro'])) {
 }
 $encoursFourn = $tresorerie->getEncoursFournisseur();
 $cumul_total_charge = $tresorerie->cumul_total_charge($charge_total);
+$tresorerie->ajoutCategorie($categorie2);
 
 $mois = array("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre");
 $moisPrecedent = array();

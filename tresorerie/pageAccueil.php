@@ -82,7 +82,7 @@ if ($action == 'add')
 * Put here all code to build page
 ****************************************************/
 
-llxHeader('','Page d\'initialisation' ,'');
+llxHeader('','Page d\'initialisation et d\'ajout de rubrique' ,'');
 
 $form=new Form($db);
 // Put here content of your page
@@ -143,7 +143,7 @@ div .form{
                     <img border="0" title="" alt="" src="/dolibarr/htdocs/theme/eldy/img/title.png"></img>
                 </td>
                 <td class="nobordernopadding">
-                    <div class="titre">Espace d'initialisation du module de trésorerie</div>
+                    <div class="titre">Espace d'initialisation du module de trésorerie, ainsi que récupération de catégorie ajoutées</div>
                 </td>
             </tr>
         </tbody>

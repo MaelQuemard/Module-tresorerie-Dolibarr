@@ -1229,6 +1229,32 @@ class tresorerie extends CommonObject
 		return $cumul_solde_tresorerie;
 	}
 
+
+	//Mettre cette méthode dans un autre fichier et créer l'autre pour supprimer une colonne et enfin créer un bouton pour l'ajout et la suppression!!!
+	public function ajoutCategorie($categ)
+	{
+		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
+		$replace = array("");
+		$sql = "SELECT * FROM llx_tresorerie LIMIT 1";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		$nb = mysqli_num_fields($res);
+		$row = array();
+		while ($data = mysqli_fetch_row($res)) {
+			for ($i=0; $i < $nb; $i++) {
+				$finfo = mysqli_fetch_field_direct($res, $i);
+				$row[] = $finfo->name;
+			}
+		}
+		foreach ($categ as $value) {
+			if ($value != NULL) {
+				if (!in_array($value, $row)) {
+					$sql2 = "ALTER TABLE llx_tresorerie ADD $value DOUBLE AFTER rowid;";
+					mysqli_query($this->link, $sql2) or die (mysqli_error($this->link));
+				}
+			}
+		}
+	}
+
 	//3 methode en desous pas utile pour l'instant, la methode getSolde() fait cela !!
 /*	public function up_tresorerie_Achat()
 	{
