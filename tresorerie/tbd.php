@@ -1,6 +1,5 @@
 <?php
-/* Copyright (C) 2007-2010 Laurent Destailleur  <eldy@users.sourceforge.net>
- * Copyright (C) ---Put here your own copyright and developer email---
+/* Copyright (C) 2015	Mael Quemard
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,23 +16,10 @@
  */
 
 /**
- *   	\file       dev/skeletons/skeleton_page.php
- *		\ingroup    mymodule othermodule1 othermodule2
- *		\brief      This file is an example of a php page
- *					Put here some comments
+ *	\file       htdocs/treorerie/tdb.php
+ *	\ingroup    tresorerie
+ *	\brief      Show the tresorerie
  */
-
-//if (! defined('NOREQUIREUSER'))  define('NOREQUIREUSER','1');
-//if (! defined('NOREQUIREDB'))    define('NOREQUIREDB','1');
-//if (! defined('NOREQUIRESOC'))   define('NOREQUIRESOC','1');
-//if (! defined('NOREQUIRETRAN'))  define('NOREQUIRETRAN','1');
-//if (! defined('NOCSRFCHECK'))    define('NOCSRFCHECK','1');			// Do not check anti CSRF attack test
-//if (! defined('NOSTYLECHECK'))   define('NOSTYLECHECK','1');			// Do not check style html tag into posted data
-//if (! defined('NOTOKENRENEWAL')) define('NOTOKENRENEWAL','1');		// Do not check anti POST attack test
-//if (! defined('NOREQUIREMENU'))  define('NOREQUIREMENU','1');			// If there is no need to load and show top and left menu
-//if (! defined('NOREQUIREHTML'))  define('NOREQUIREHTML','1');			// If we don't need to load the html.form.class.php
-//if (! defined('NOREQUIREAJAX'))  define('NOREQUIREAJAX','1');
-//if (! defined("NOLOGIN"))        define("NOLOGIN",'1');				// If this page is public (can be called outside logged session)
 
 // Change this following line to use the correct relative path (../, ../../, etc)
 $res=0;
@@ -86,10 +72,6 @@ if ($action == 'add')
 		$mesg=$object->error;
 	}
 }
-
-
-
-
 
 /***************************************************
 * VIEW
@@ -1001,60 +983,9 @@ if ($_REQUEST["account"])
 }
 else
 {
-	
+	echo "Error Bank Account not found";
 }
-							
 
-                           /* DEUXIEME TEST PLUS CONCLUANT !!
-
-                           foreach ($categorie as $row) {
-                                $index++;
-                                ($index%2==0) ? $t = $class[0] : $t = $class[1];
-                                ?>
-                                    <tr <?php echo "class=\"$t\""; ?>>
-                                        <td class="right"><?php echo $row; ?></td>
-                                        <?php  
-                                        	$row = str_replace($search, $replace, $row);
-                                        	foreach ($taux as $categTaux => $valueTaux) {
-	                                        	foreach ($tresoReel as $key => $ligne_par_mois) {
-	                                        		foreach ($ligne_par_mois as $categTTC => $valueTTC) {
-														if ($categTTC == $categTaux) {
-															if ($categTTC == $row) {
-																echo "<td>".str_replace("-", "",round($valueTTC*(100/($valueTaux+100)), 2))."</td>";
-															}
-														}
-													}
-	                                        	}
-	                                        }*/
-
-
-
-                                        /* 	Phase peu fonctionnel a retravailler 
-											Utiliser un tableu de tableau et chaque ligne de tableau correspondront a un mois !! 
-											modifier getTresorerie_Reel() pour mettre en place le tableau de tableau
-											Puis modifier get_HT_categ() pour faire le calcul selon ce qu'on aura !!
-											Et enfin reussir a afficher tout ca !!
-                                        */
-                                        /*
-                                        PREMIER TEST !!
-
-                                        	$ok = false;
-                                        	foreach ($tresoReel as $key => $value) {
-                        						$key = str_replace($search, $replace, $key);
-                        						$row = str_replace($search, $replace, $row);                            		
-                        						$montant_HT_Categ = $tresorerie->Calcul_HT_Categ($taux, $tresoReel);
-	                                           	for ($i=0; $i < 12; $i++) { 
-	                                           		if ($key == $row) {
-	                                           			$ok = true;
-		                                        		echo "<td><input type=\"text\" name=\"".$key."\"></td>";
-		                                        		echo "<td>".str_replace("-", "", $montant_HT_Categ[$key])."</td>";
-		                                        	}elseif($value == 0 && $ok==false){
-		                                        		echo "<td><input type=\"text\" name=\"".$key."\"></td>";
-		                                        		echo "<td></td>";
-		                                        		$ok = false;
-		                                        	}
-		                                        }
-	                                        }*/
 // Example 1 : Adding jquery code
 print '<script type="text/javascript" language="javascript">
 jQuery(document).ready(function() {

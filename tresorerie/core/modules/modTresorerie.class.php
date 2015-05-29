@@ -1,7 +1,5 @@
 <?php
-/* Copyright (C) 2003      Rodolphe Quiedeville <rodolphe@quiedeville.org>
- * Copyright (C) 2004-2012 Laurent Destailleur  <eldy@users.sourceforge.net>
- * Copyright (C) 2005-2012 Regis Houssin        <regis.houssin@capnetworks.com>
+/* Copyright (C) 2015	Mael Quemard
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +17,7 @@
 
 /**
  * 	\defgroup   Tresorerie     Module Tresorerie
- *  \brief      Example of a module descriptor.
+ *  \brief      Module to manage the tresorerie
  *				Such a file must be copied into htdocs/Tresorerie/core/modules directory.
  *  \file       htdocs/Tresorerie/core/modules/modTresorerie.class.php
  *  \ingroup    Tresorerie
