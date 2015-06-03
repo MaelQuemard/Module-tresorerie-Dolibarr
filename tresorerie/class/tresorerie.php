@@ -1,5 +1,5 @@
 <?php 
-/* Copyright (C) 2015	Mael Quemard
+/* Copyright (C) 2015	Mael Quemard	<quemard.mael@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@ class tresorerie extends CommonObject
 	//Selectionne et calcule le solde du mois courant
 	public function getSolde()
 	{
-		$sql = "SELECT sum(b.amount) as amount FROM llx_bank as b, llx_bank_account as ba WHERE b.fk_account = 1 AND b.dateo <= '$this->date' AND ba.entity = '$this->entity' ";
+		$sql = "SELECT sum(b.amount) as amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.fk_account = 1 AND b.dateo <= '$this->date' AND ba.entity = '$this->entity' ";
 		$res = mysqli_query($this->link, $sql) or die(mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$this->solde = $data["amount"];
@@ -62,7 +62,7 @@ class tresorerie extends CommonObject
 	//Selectionne et calcule la somme su chiffre d'affaire du mois courant
 	public function getTotalCharge()
 	{
-		$sql = "SELECT DISTINCT SUM(amount) as a FROM llx_bank_categ as bcat, llx_bank_class as bclass, llx_bank_account as ba, llx_bank as b WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND bclass.lineid = b.rowid";
+		$sql = "SELECT DISTINCT SUM(amount) as a FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND bclass.lineid = b.rowid";
 		$res = mysqli_query($this->link, $sql) or die(mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$this->charge = $data['a'];
@@ -73,7 +73,7 @@ class tresorerie extends CommonObject
 	//Selcetionne le label des catégories, le montant et la date selon si c'est dans le mois courant et le montant selon si il est rangé dans une catégorie
 	public function getMontantCategorie()
 	{
-		$sql = "SELECT DISTINCT bcat.label, b.amount FROM llx_bank_categ as bcat, llx_bank_class as bclass, llx_bank_account as ba, llx_bank as b, llx_categ_tva as ct, llx_c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND ct.fk_bank_categ = bcat.rowid";
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND ct.fk_bank_categ = bcat.rowid";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			//calcul permettant d'avoir le montant HT
@@ -87,7 +87,8 @@ class tresorerie extends CommonObject
 	//Selectionne le chiffre d'affaire, plus précisement le nombre d'entrée d'argent et on additionne tous cela pour obtenir le CA du mois courant
 	public function getCA()
 	{
-		$sql = "SELECT b.amount, b.dateo FROM llx_bank as b, llx_bank_account as ba WHERE b.amount > 0 AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity'";
+		//$sql = "SELECT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount > 0 AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity'";
+		$sql = "SELECT DISTINCT b.amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount > 0 AND b.dateo <= '$this->date'AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity';";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$this->ca += $data['amount'];
@@ -98,7 +99,7 @@ class tresorerie extends CommonObject
 	//Selectionne le montant des achats, seulement si, les achats ne font pas partie d'une catégorie (charge)
 	public function getAchat()
 	{
-		$sql = "SELECT DISTINCT b.amount FROM llx_bank as b, llx_bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM llx_bank_class as bclass) AND b.amount < 0 AND b.dateo <= '$this->date'AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity';";
+		$sql = "SELECT DISTINCT b.amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount < 0 AND b.dateo <= '$this->date'AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity';";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$this->achat += $data['amount'];
@@ -108,7 +109,7 @@ class tresorerie extends CommonObject
 
 	public function getCategorie()
 	{
-		$query_categ = "SELECT label FROM `llx_bank_categ` ORDER BY `label` ASC;";
+		$query_categ = "SELECT label FROM `".MAIN_DB_PREFIX."bank_categ` ORDER BY `label` ASC;";
 		$resultat = mysqli_query($this->link, $query_categ) or die (mysqli_error($this->link));
 		while ($data= mysqli_fetch_assoc($resultat)) {
 			$this->categorie[] = $data['label'];
@@ -118,7 +119,7 @@ class tresorerie extends CommonObject
 
 	public function getNbLignes()
 	{
-		$query_categ = "SELECT label FROM `llx_bank_categ` ORDER BY `label` ASC;";
+		$query_categ = "SELECT label FROM `".MAIN_DB_PREFIX."bank_categ` ORDER BY `label` ASC;";
 		$resultat = mysqli_query($this->link, $query_categ) or die (mysqli_error($this->link));
 		$nb = mysqli_num_rows($resultat);
 		return $nb;
@@ -145,7 +146,7 @@ class tresorerie extends CommonObject
 		return $amount;
 	}
 
-	//Permet de soit mettre à jour le tableau de bord (base de donnée) llx_tresorerie ou soit d'inserer une nouvelle entrée dans le tbd (bd)
+	//Permet de soit mettre à jour le tableau de bord (base de donnée) ".MAIN_DB_PREFIX."tresorerie ou soit d'inserer une nouvelle entrée dans le tbd (bd)
 	public function Upsert($Tcharge, $solde = 0, $ca = 0, $achat = 0, $Mcharge, $categ)
 	{
 		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
@@ -154,7 +155,7 @@ class tresorerie extends CommonObject
 		$month = explode("-", $this->dateD)[1];
 		$years = explode("-", $this->dateD)[0];
 		$nb_jours = date("t", mktime(0,0,0,$month, 1, $years));
-		$query = "SELECT t.date FROM llx_tresorerie as t WHERE t.date <= '$this->dateD-$nb_jours' AND t.date >= '$this->dateD-01' AND t.type='reel';";
+		$query = "SELECT t.date FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date <= '$this->dateD-$nb_jours' AND t.date >= '$this->dateD-01' AND t.type='reel';";
 		$res = mysqli_query($this->link, $query) or die (mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$m = $data['date'];
@@ -162,7 +163,7 @@ class tresorerie extends CommonObject
 		$mois = explode("-", $m);
 
 		if ($mois[1] == date("m")) {
-			$sql = "UPDATE llx_tresorerie SET ";
+			$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ";
 			foreach ($categ as $rowC) {
 				foreach ($Mcharge as $rowM => $value) {
 					$rowC = str_replace($search, $replace, $rowC);
@@ -183,7 +184,7 @@ class tresorerie extends CommonObject
 			mysqli_commit($this->link);
 		}
 		else{
-			$sql = "INSERT INTO llx_tresorerie (";
+			$sql = "INSERT INTO ".MAIN_DB_PREFIX."tresorerie (";
 			foreach ($Mcharge as $row => $value) {
 				$row = str_replace($search, $replace, $row);
 				$sql .= "$row, ";
@@ -203,7 +204,7 @@ class tresorerie extends CommonObject
 
 	public function getTaux()
 	{
-		$sql = "SELECT DISTINCT bcat.label, t.taux FROM llx_c_tva as t, llx_categ_tva as ct, llx_bank_categ as bcat where ct.fk_c_tva = t.rowid AND ct.fk_bank_categ = bcat.rowid;";
+		$sql = "SELECT DISTINCT bcat.label, t.taux FROM ".MAIN_DB_PREFIX."c_tva as t, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."bank_categ as bcat where ct.fk_c_tva = t.rowid AND ct.fk_bank_categ = bcat.rowid;";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
 		$replace = array("");
@@ -221,7 +222,7 @@ class tresorerie extends CommonObject
 		$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]-31";
 		$date_temp_a = explode("-", $this->date);
 		$date_temp_courant = "$date_temp_a[0]-$date_temp_a[1]-31";
-		$sql = ($date == 0) ?  "SELECT * FROM llx_tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='reel'":  "SELECT * FROM llx_tresorerie as t WHERE t.date>='$date' AND t.type='reel' ORDER BY t.date ASC";
+		$sql = ($date == 0) ?  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='reel'":  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$date' AND t.type='reel' ORDER BY t.date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$nb = mysqli_num_fields($res);
 		$tab1 = array();
@@ -242,11 +243,8 @@ class tresorerie extends CommonObject
 	{
 		$tresoReel_HT = array();
 		$date_decoupe = explode("/", $date_param);
-		$date = "$date_decoupe[2]-$date_decoupe[1]-$date_decoupe[0]";
-		$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]-01";
-		$date_temp_a = explode("-", $this->date);
-		$date_temp_courant = "$date_temp_a[0]-$date_temp_a[1]-01";
-		$sql = ($date == 0) ?  "SELECT * FROM llx_tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='reel' ORDER BY t.date ASC;":  "SELECT * FROM llx_tresorerie as t WHERE t.date>='$date' AND t.type='reel' ORDER BY t.date ASC";
+		$date = "$date_decoupe[2]-$date_decoupe[1]"/*$date_decoupe[0]"*/;
+		$sql = ($date == 0) ?  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='reel' ORDER BY t.date ASC;":  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$date-01' AND t.type='reel' ORDER BY t.date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$nb = mysqli_num_fields($res);
 		$tab1 = array();
@@ -257,7 +255,12 @@ class tresorerie extends CommonObject
 					if (!empty($taux)) {
 						foreach ($taux as $categTaux => $valueTaux) {
 							if($categTaux == $finfo->name){
-								$tab1[$finfo->name] = round($data[$i]*(100/($valueTaux+100)), 2);
+								if ($categTaux != "TVA") {
+									$tab1[$finfo->name] = round($data[$i]*(100/($valueTaux+100)), 2);
+								}
+								else{
+									$tab1[$finfo->name] = round($data[$i], 2);
+								}
 							}
 							elseif(!array_key_exists($finfo->name, $tab1)){
 								$tab1[$finfo->name] = $data[$i];
@@ -291,7 +294,7 @@ class tresorerie extends CommonObject
 		$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]-31";
 		$date_temp_a = explode("-", $this->date);
 		$date_temp_courant = "$date_temp_a[0]-$date_temp_a[1]-31";
-		$sql = ($date == 0) ?  "SELECT * FROM llx_tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='prev' ORDER BY t.date ASC;":  "SELECT * FROM llx_tresorerie as t WHERE t.date>='$date' AND t.type='prev' ORDER BY t.date ASC";
+		$sql = ($date == 0) ?  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='prev' ORDER BY t.date ASC;":  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$date' AND t.type='prev' ORDER BY t.date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$nb = mysqli_num_fields($res);
 		$tab1 = array();
@@ -312,11 +315,8 @@ class tresorerie extends CommonObject
 	{
 		$tresoPrev_HT = array();
 		$date_decoupe = explode("/", $date_param);
-		$date = "$date_decoupe[2]-$date_decoupe[1]-$date_decoupe[0]";
-		$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]-31";
-		$date_temp_a = explode("-", $this->date);
-		$date_temp_courant = "$date_temp_a[0]-$date_temp_a[1]-31";
-		$sql = ($date == 0) ?  "SELECT * FROM llx_tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='prev' ORDER BY t.date ASC;":  "SELECT * FROM llx_tresorerie as t WHERE t.date>='$date' AND t.type='prev' ORDER BY t.date ASC";
+		$date = "$date_decoupe[2]-$date_decoupe[1]"/*$date_decoupe[0]"*/;
+		$sql = ($date == 0) ?  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='prev' ORDER BY t.date ASC;":  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$date-01' AND t.type='prev' ORDER BY t.date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$nb = mysqli_num_fields($res);
 		$tab1 = array();
@@ -327,7 +327,7 @@ class tresorerie extends CommonObject
 					if (!empty($taux)) {
 						foreach ($taux as $categTaux => $valueTaux) {
 							if($categTaux == $finfo->name){
-								$tab1[$finfo->name] = round($data[$i]*(100/($valueTaux+100)), 2);
+								$tab1[$finfo->name] = round($data[$i], 2);
 							}
 							elseif(!array_key_exists($finfo->name, $tab1)){
 								$tab1[$finfo->name] = $data[$i];
@@ -362,13 +362,15 @@ class tresorerie extends CommonObject
 			$info_date_D = $info_date[0]."-".$info_date[1]."-01";
 			$info_date_F = $info_date[0]."-".$info_date[1]."-28";
 			$info_date = $info_date[0]."-".$info_date[1]."-".$info_date[2];
+			$info[0] = str_replace(" ", "", $info[0]);
+			$info[0] = str_replace(",", ".", $info[0]);
 			if (strlen($info[0])<1 || $info[0]=="" || $info[0]==" " || $info[0]==0) {
 				$info[0]="NULL";
 			}
-			if (!strstr("-", $info[0]) && $info[0]!="NULL") {
+			if (!strstr("-", $info[0]) && $info[0]!="NULL" && $info[1]!="CA") {
 				$info[0] = "-".$info[0];
 			}
-			$sql = "UPDATE llx_tresorerie SET $info[1]=$info[0], type='prev' WHERE type='prev' AND date BETWEEN '$info_date_D' AND '$info_date_F';";
+			$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET $info[1]=$info[0], type='prev' WHERE type='prev' AND date BETWEEN '$info_date_D' AND '$info_date_F';";
 			mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 			mysqli_commit($this->link);
 		}
@@ -386,7 +388,7 @@ class tresorerie extends CommonObject
 			$date = "$date_decoupe[2]-$date_decoupe[1]-$date_decoupe[0]";
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
-		$sql = "SELECT * FROM llx_tresorerie where type='reel' ORDER BY date ASC";
+		$sql = "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_treso = array();
 		$i = 0;
@@ -398,7 +400,13 @@ class tresorerie extends CommonObject
 			foreach ($tableau_treso_mois as $categorie_du_mois => $valeur) {
 				foreach ($taux as $categTaux => $valueTaux) {
 					if ($categTaux == $categorie_du_mois) {
-						$tableau_treso_mois[$categorie_du_mois] = round($valeur*(100/($valueTaux+100)), 2);
+						if ($categTaux != "TVA") {
+							$tableau_treso_mois[$categorie_du_mois] = round($valeur*(100/($valueTaux+100)), 2);
+						}
+						else{
+							$tableau_treso_mois[$categorie_du_mois] = round($valeur, 2);
+						}
+						
 					}
 				}
 			}
@@ -436,7 +444,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$sql = "SELECT * FROM llx_tresorerie where type='prev' ORDER BY date ASC";
+		$sql = "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie where type='prev' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_treso = array();
 		$i = 0;
@@ -448,7 +456,7 @@ class tresorerie extends CommonObject
 			foreach ($tableau_treso_mois as $categorie_du_mois => $valeur) {
 				foreach ($taux as $categTaux => $valueTaux) {
 					if ($categTaux == $categorie_du_mois) {
-						$tableau_treso_mois[$categorie_du_mois] = round($valeur*(100/($valueTaux+100)), 2);
+						$tableau_treso_mois[$categorie_du_mois] = round($valeur/**(100/($valueTaux+100))*/, 2);
 					}
 				}
 			}
@@ -469,7 +477,7 @@ class tresorerie extends CommonObject
 				$i++;
 			}
 		}
-		return $this ->charge_prev;
+		return $this->charge_prev;
 	}
 
 	public function calcul_solde_tresorerie_prev($categorie, $taux, $date_param = 0)
@@ -486,7 +494,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$query_1 = "SELECT soldeDebut, date FROM llx_tresorerie WHERE date>='".date("Y")."-01-01' AND type='reel'";
+		$query_1 = "SELECT soldeDebut, date FROM ".MAIN_DB_PREFIX."tresorerie WHERE date>='".date("Y")."-01-01' AND type='reel'";
 		$res_1 = mysqli_query($this->link, $query_1)or die(mysqli_error($this->link));
 
 		$tab_tout = array();
@@ -494,7 +502,7 @@ class tresorerie extends CommonObject
 		$solde_courant_reel = array();
 		$i = 0;
 		$ok = false;
-		$query = "SELECT * FROM llx_tresorerie WHERE date>='".date("Y")."-01-01' AND type ='prev' ORDER BY date ASC";
+		$query = "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie WHERE date>='".date("Y")."-01-01' AND type ='prev' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $query)or die(mysqli_error($this->link));
 		while ($data = mysqli_fetch_array($res, MYSQLI_ASSOC)) {
 			$tab_tout[] = $data;
@@ -511,7 +519,7 @@ class tresorerie extends CommonObject
 						if (($key[0]."-".$key[1]) == ($_les_dates_treso[0]."-".$_les_dates_treso[1]) && !$ok) {
 							$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] = $valueSoldeCourant;
 							$ok=true;
-							$query_update_solde_debut = "UPDATE llx_tresorerie SET soldeDebut = '".$valueSoldeCourant."' WHERE date >= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-01' AND date <= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-28' AND type = 'prev';";
+							$query_update_solde_debut = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET soldeDebut = '".$valueSoldeCourant."' WHERE date >= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-01' AND date <= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-28' AND type = 'prev';";
 							mysqli_query($this->link, $query_update_solde_debut)or die(mysqli_error($this->link));
 							mysqli_commit($this->link);
 						}
@@ -530,7 +538,7 @@ class tresorerie extends CommonObject
 					}
 				}
 				$ok = false;
-				$query_update_solde_courant = "UPDATE llx_tresorerie SET soldeCourant = '".$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]]."' WHERE date >= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-01' AND date <= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-28' AND type = 'prev';";
+				$query_update_solde_courant = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET soldeCourant = '".$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]]."' WHERE date >= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-01' AND date <= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-28' AND type = 'prev';";
 				mysqli_query($this->link, $query_update_solde_courant);
 				mysqli_commit($this->link);
 			}
@@ -544,7 +552,7 @@ class tresorerie extends CommonObject
 		
 		//Pour les categories
 		$le_tab = array();
-		$query = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM llx_bank_categ as bcat, llx_bank_class as bclass, llx_bank_account as ba, llx_bank as b, llx_facture as f, llx_categ_tva as ct, llx_c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND ct.fk_bank_categ = bcat.rowid ORDER BY b.dateo ASC";
+		$query = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."facture as f, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND ct.fk_bank_categ = bcat.rowid ORDER BY b.dateo ASC";
 		$res = mysqli_query($this->link, $query)or die(mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$categorie = str_replace($search, $replace, $data['label']);
@@ -557,7 +565,7 @@ class tresorerie extends CommonObject
 		}
 		foreach ($le_tab as $date_du_tab => $value) {
 			foreach ($value as $catg => $la_valeur) {
-				$sql = "UPDATE llx_tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
+				$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
 				mysqli_query($this->link, $sql)or die(mysqli_error($this->link));
 				mysqli_commit($this->link);
 			}
@@ -565,7 +573,7 @@ class tresorerie extends CommonObject
 
 		//Pour le chiffre d'affaire
 		$le_tab = array();
-		$sql = "SELECT b.amount, b.dateo FROM llx_bank as b, llx_bank_account as ba WHERE b.amount > 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ba.entity = '$this->entity';";
+		$sql = "SELECT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount > 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ba.entity = '$this->entity';";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$date = explode("-", $data['dateo']);
@@ -577,7 +585,7 @@ class tresorerie extends CommonObject
 		}
 		foreach ($le_tab as $date_du_tab => $value) {
 			foreach ($value as $catg => $la_valeur) {
-				$sql = "UPDATE llx_tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
+				$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
 				mysqli_query($this->link, $sql)or die(mysqli_error($this->link));
 				mysqli_commit($this->link);
 			}
@@ -585,8 +593,8 @@ class tresorerie extends CommonObject
 
 		//Pour les achats
 		$le_tab = array();
-		$sql = "SELECT DISTINCT b.amount, b.dateo FROM llx_bank as b, llx_bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM llx_bank_class as bclass) AND b.amount < 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ba.entity = '$this->entity';";
-		//$sql = "SELECT DISTINCT b.amount, b.dateo FROM llx_bank as b, llx_bank_class as bclass, llx_bank_account as ba WHERE b.amount < 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND bclass.lineid!=b.rowid AND ba.entity = '$this->entity';";
+		$sql = "SELECT DISTINCT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount < 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ba.entity = '$this->entity';";
+		//$sql = "SELECT DISTINCT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount < 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND bclass.lineid!=b.rowid AND ba.entity = '$this->entity';";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$date = explode("-", $data['dateo']);
@@ -598,7 +606,7 @@ class tresorerie extends CommonObject
 		}
 		foreach ($le_tab as $date_du_tab => $value) {
 			foreach ($value as $catg => $la_valeur) {
-				$sql = "UPDATE llx_tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
+				$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
 				mysqli_query($this->link, $sql)or die(mysqli_error($this->link));
 				mysqli_commit($this->link);
 			}
@@ -622,7 +630,7 @@ class tresorerie extends CommonObject
 		$tab_solde_prev = array();
 		$solde_courant_reel = array();
 		$ok = false;
-		$query = "SELECT * FROM llx_tresorerie WHERE date>='".date("Y")."-01-01' AND type ='reel' ORDER BY date ASC";
+		$query = "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie WHERE date>='".date("Y")."-01-01' AND type ='reel' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $query)or die(mysqli_error($this->link));
 		while ($data = mysqli_fetch_array($res, MYSQLI_ASSOC)) {
 			$tab_tout[] = $data;
@@ -639,7 +647,7 @@ class tresorerie extends CommonObject
 				elseif ($_les_dates_treso[1]>10){
 					$date_temp_a = ($_les_dates_treso[0]."-".($_les_dates_treso[1]-1));
 				}
-				$query_1 = "SELECT soldeCourant, date FROM llx_tresorerie WHERE date>='".$date_temp_a."-01' AND type='reel'";
+				$query_1 = "SELECT soldeCourant, date FROM ".MAIN_DB_PREFIX."tresorerie WHERE date>='".$date_temp_a."-01' AND type='reel'";
 				$res_1 = mysqli_query($this->link, $query_1)or die(mysqli_error($this->link));
 				while ($soldeDebut = mysqli_fetch_assoc($res_1)) {
 					$solde_courant_reel[$soldeDebut['date']] = $soldeDebut['soldeCourant'];
@@ -650,7 +658,7 @@ class tresorerie extends CommonObject
 						if (($key[0]."-".$key[1]) == $date_temp_a && !$ok) {
 							$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] = $valueSoldeCourant;
 							$ok=true;
-							$query_update_solde_debut = "UPDATE llx_tresorerie SET soldeDebut = '".$valueSoldeCourant."' WHERE date >= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-01' AND date <= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-28' AND type = 'reel';";
+							$query_update_solde_debut = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET soldeDebut = '".$valueSoldeCourant."' WHERE date >= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-01' AND date <= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-28' AND type = 'reel';";
 							mysqli_query($this->link, $query_update_solde_debut)or die(mysqli_error($this->link));
 							mysqli_commit($this->link);
 						}
@@ -669,7 +677,7 @@ class tresorerie extends CommonObject
 					}
 				}
 				$ok = false;
-				$query_update_solde_courant = "UPDATE llx_tresorerie SET soldeCourant = '".$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]]."' WHERE date >= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-01' AND date <= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-28' AND type = 'reel';";
+				$query_update_solde_courant = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET soldeCourant = '".$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]]."' WHERE date >= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-01' AND date <= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-28' AND type = 'reel';";
 				mysqli_query($this->link, $query_update_solde_courant);
 				mysqli_commit($this->link);
 
@@ -688,7 +696,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$sql = "SELECT CA, date FROM llx_tresorerie where type='reel' ORDER BY date ASC";
+		$sql = "SELECT CA, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_treso = array();
 		$i = 0;
@@ -724,7 +732,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$sql = "SELECT CA, date FROM llx_tresorerie where type='reel' ORDER BY date ASC";
+		$sql = "SELECT CA, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_ca = array();
 		while($data = mysqli_fetch_assoc($res)){
@@ -732,7 +740,7 @@ class tresorerie extends CommonObject
 			$tableau_ca[$data['date'][0]."-".$data['date'][1]] = $data['CA'];
 		}
 
-		$sql = "SELECT achat, date FROM llx_tresorerie where type='reel' ORDER BY date ASC";
+		$sql = "SELECT achat, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_achat = array();
 		$i = 0;
@@ -745,7 +753,7 @@ class tresorerie extends CommonObject
 			$_les_dates_ca = explode("-", $date_ca);
 			if ($date_ca >= $date_temp_demande) {
 				if (empty($tableau_achat[$date_ca])) {
-					$taux_de_marge[$i] = 0;
+					$taux_de_marge[$i] = 100;
 				}else{
 					$taux_de_marge[$i] = round((($tableau_ca[$date_ca]+$tableau_achat[$date_ca])/-$tableau_achat[$date_ca])*100, 0);
 				}	
@@ -767,7 +775,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$sql = "SELECT CA, date FROM llx_tresorerie where type='reel' ORDER BY date ASC";
+		$sql = "SELECT CA, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_ca = array();
 		while($data = mysqli_fetch_assoc($res)){
@@ -852,7 +860,7 @@ class tresorerie extends CommonObject
 		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
 		$replace = array("");
 		$tab1 = array();
-		$sql = "SELECT DISTINCT b.rowid, bcat.label, b.amount, b.dateo FROM llx_bank_categ as bcat, llx_bank_class as bclass, llx_bank_account as ba, llx_bank as b, llx_facture as f, llx_categ_tva as ct, llx_c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND ct.fk_c_tva = t.rowid AND ct.fk_bank_categ = bcat.rowid AND b.amount<=0 ORDER BY b.dateo ASC;";
+		$sql = "SELECT DISTINCT b.rowid, bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."facture as f, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND ct.fk_c_tva = t.rowid AND ct.fk_bank_categ = bcat.rowid AND b.amount<=0 ORDER BY b.dateo ASC;";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while($data = mysqli_fetch_array($res, MYSQLI_ASSOC)){
 			$tab1[] = $data['label'];
@@ -860,11 +868,11 @@ class tresorerie extends CommonObject
 		}
 		foreach ($categ as $value) {
 			$value = str_replace($search, $replace, $value);
-			$query = "UPDATE llx_tresorerie SET ".$value."=NULL where type ='reel';";
+			$query = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$value."=NULL where type ='reel';";
 			mysqli_query($this->link ,$query);
 		}
 
-		$sql2 = "SELECT DISTINCT date FROM llx_tresorerie order by date asc;";
+		$sql2 = "SELECT DISTINCT date FROM ".MAIN_DB_PREFIX."tresorerie order by date asc;";
 		$res2 = mysqli_query($this->link ,$sql2) or die (mysqli_error($this->link));
 		while($data = mysqli_fetch_assoc($res2)){
 			$_la_date = explode("-", $data['date']);
@@ -878,14 +886,15 @@ class tresorerie extends CommonObject
 			$tableau_categ['label'] = str_replace($search, $replace, $tableau_categ['label']);
 			$date_mois = explode("-" ,$tableau_categ['dateo']);
 			$date_par_mois = $date_mois[0]."-".$date_mois[1];
+			$nb_jours = date("t", mktime(0,0,0,$date_mois[0], 1, $date_mois[1]));
 			if (in_array($date_par_mois, $tableau_des_dates)) {
 				$tab_insert[$tableau_categ['label']] += $tableau_categ['amount'];
-				$query = "UPDATE llx_tresorerie SET ".$tableau_categ['label']." = ".$tab_insert[$tableau_categ['label']]." WHERE date >='".$date_par_mois."-01' AND date<='".$date_par_mois."-28' AND type='reel';";
+				$query = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$tableau_categ['label']." = ".$tab_insert[$tableau_categ['label']]." WHERE date >='".$date_par_mois."-01' AND date<='".$date_par_mois."-".$nb_jours."' AND type='reel';";
 			}
 			else{
 				$tab_insert = array();
 				$tab_insert[$tableau_categ['label']] += $tableau_categ['amount'];
-				$query = "UPDATE llx_tresorerie SET ".$tableau_categ['label']." = ".$tab_insert[$tableau_categ['label']]." WHERE date >='".$date_par_mois."-01' AND date<='".$date_par_mois."-28' AND type='reel';";
+				$query = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$tableau_categ['label']." = ".$tab_insert[$tableau_categ['label']]." WHERE date >='".$date_par_mois."-01' AND date<='".$date_par_mois."-".$nb_jours."' AND type='reel';";
 			}
 			array_push($tableau_des_dates, $date_par_mois);
 			mysqli_query($this->link, $query) or die (mysqli_error($this->link));
@@ -895,7 +904,7 @@ class tresorerie extends CommonObject
 
 	public function getEncoursFournisseur()
 	{
-		$sql3 = "SELECT f.total_ttc, f.date_lim_reglement as dlr, s.nom FROM llx_facture_fourn as f LEFT JOIN llx_societe as s ON f.fk_soc = s.rowid WHERE f.entity = 1 AND f.paye = 0 AND f.fk_statut = 1 ORDER BY dlr ASC";
+		$sql3 = "SELECT f.total_ttc, f.date_lim_reglement as dlr, s.nom FROM ".MAIN_DB_PREFIX."facture_fourn as f LEFT JOIN ".MAIN_DB_PREFIX."societe as s ON f.fk_soc = s.rowid WHERE f.entity = 1 AND f.paye = 0 AND f.fk_statut = 1 ORDER BY dlr ASC";
 		$res = mysqli_query($this->link ,$sql3) or die (mysqli_error($this->link));
 		$tableau_encours_fourn = array();
 		while($data = mysqli_fetch_assoc($res)){
@@ -916,7 +925,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$sql = "SELECT CA, date FROM llx_tresorerie where type='reel' ORDER BY date ASC";
+		$sql = "SELECT CA, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_ca = array();
 		while($data = mysqli_fetch_assoc($res)){
@@ -946,7 +955,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$sql = "SELECT achat, date FROM llx_tresorerie where type='reel' ORDER BY date ASC";
+		$sql = "SELECT achat, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_achat = array();
 		while($data = mysqli_fetch_assoc($res)){
@@ -965,6 +974,45 @@ class tresorerie extends CommonObject
 		return $tva_due;
 	}
 
+	public function getTVAPayer($date_param = 0)
+	{
+		if ($date_param == 0) {
+			$date_temp_demande = $this->dateD;
+		}
+		else{
+			$date_decoupe = explode("/", $date_param);
+			$date = "$date_decoupe[2]-$date_decoupe[1]-$date_decoupe[0]";
+			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
+		}
+
+		$sql = "SELECT TVA, date from ".MAIN_DB_PREFIX."tresorerie where type = 'reel' order by date asc";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		$tableau_tva = array();
+		while($data = mysqli_fetch_assoc($res)){
+			$data['date'] = explode("-", $data['date']);
+			$tableau_tva[$data['date'][0]."-".$data['date'][1]] = $data['TVA'];
+		}
+		
+		$tva_payer = array();
+		foreach ($tableau_tva as $date_tva => $tva) {
+			$_les_dates_tva = explode("-", $date_tva);
+			if ($date_tva >= $date_temp_demande) {
+				$tva_payer[$i] = $tva;
+				$i++;
+			}
+		}
+		return $tva_payer;
+	}
+
+	public function calculSoldeTVA($tva_due, $tva_collecte, $tva_payer)
+	{
+		$tab_solde_tva = array();
+		foreach ($tva_collecte as $key => $tva_col) {
+			$tab_solde_tva[$key] = $tva_collecte[$key] + $tva_due[$key] + $tva_payer[$key];
+		}
+		return $tab_solde_tva;
+	}
+
 	public function cumul_CA($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -976,7 +1024,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$sql = "SELECT CA, date FROM llx_tresorerie where type='reel' ORDER BY date ASC";
+		$sql = "SELECT CA, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_ca = array();
 		while($data = mysqli_fetch_assoc($res)){
@@ -1007,7 +1055,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$sql = "SELECT CA, date FROM llx_tresorerie where type='prev' ORDER BY date ASC";
+		$sql = "SELECT CA, date FROM ".MAIN_DB_PREFIX."tresorerie where type='prev' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_ca = array();
 		while($data = mysqli_fetch_assoc($res)){
@@ -1027,6 +1075,17 @@ class tresorerie extends CommonObject
 		return $cumul_CA;
 	}
 
+	public function pourcentage_cumul_ca($cumul_ca, $cumul_ca_prev)
+	{
+		if ($cumul_ca_prev == 0) {
+			$pourcentage = "";
+		}
+		else{
+			$pourcentage = ((-($cumul_ca*(100/(20+100))) + $cumul_ca_prev)/-$cumul_ca_prev)*100;
+		}
+		return $pourcentage;
+	}
+
 	public function cumul_achat($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -1038,7 +1097,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$sql = "SELECT achat, date FROM llx_tresorerie where type='reel' ORDER BY date ASC";
+		$sql = "SELECT achat, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_achat = array();
 		while($data = mysqli_fetch_assoc($res)){
@@ -1069,7 +1128,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$sql = "SELECT achat, date FROM llx_tresorerie where type='prev' ORDER BY date ASC";
+		$sql = "SELECT achat, date FROM ".MAIN_DB_PREFIX."tresorerie where type='prev' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_achat = array();
 		while($data = mysqli_fetch_assoc($res)){
@@ -1089,6 +1148,17 @@ class tresorerie extends CommonObject
 		return $cumul_achat;
 	}
 
+	public function pourcentage_cumul_achat($cumul_achat, $cumul_achat_prev)
+	{
+		if ($cumul_achat_prev == 0) {
+			$pourcentage = "";
+		}
+		else{
+			$pourcentage = ((-($cumul_achat*(100/(20+100))) + $cumul_achat_prev)/-$cumul_achat_prev)*100;
+		}
+		return $pourcentage;
+	}
+
 	public function cumul_Charge($taux, $date_param = 0)
 	{
 		$tresoReel_HT = array();
@@ -1097,7 +1167,7 @@ class tresorerie extends CommonObject
 		$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]-01";
 		$date_temp_a = explode("-", $this->date);
 		$date_temp_courant = "$date_temp_a[0]-$date_temp_a[1]-01";
-		$sql = ($date == 0) ?  "SELECT * FROM llx_tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='reel' ORDER BY t.date ASC;":  "SELECT * FROM llx_tresorerie as t WHERE t.date>='$date' AND t.type='reel' ORDER BY t.date ASC";
+		$sql = ($date == 0) ?  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='reel' ORDER BY t.date ASC;":  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$date' AND t.type='reel' ORDER BY t.date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$nb = mysqli_num_fields($res);
 		$tab1 = array();
@@ -1109,7 +1179,12 @@ class tresorerie extends CommonObject
 					if($categTaux == $finfo->name){
 						if ($j[$finfo->name]<12) {
 							if ($data[$i] != NULL) {
-								$tab1[$finfo->name] += round($data[$i]*(100/($valueTaux+100)), 2);
+								if ($finfo->name == "TVA") {
+									$tab1[$finfo->name] += round($data[$i], 2);
+								}
+								else{
+									$tab1[$finfo->name] += round($data[$i]*(100/($valueTaux+100)), 2);
+								}
 							}
 						}
 						$j[$finfo->name]++;
@@ -1128,7 +1203,7 @@ class tresorerie extends CommonObject
 		$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]-01";
 		$date_temp_a = explode("-", $this->date);
 		$date_temp_courant = "$date_temp_a[0]-$date_temp_a[1]-01";
-		$sql = ($date == 0) ?  "SELECT * FROM llx_tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='prev' ORDER BY t.date ASC;":  "SELECT * FROM llx_tresorerie as t WHERE t.date>='$date' AND t.type='prev' ORDER BY t.date ASC";
+		$sql = ($date == 0) ?  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='prev' ORDER BY t.date ASC;":  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$date' AND t.type='prev' ORDER BY t.date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$nb = mysqli_num_fields($res);
 		$tab1 = array();
@@ -1151,11 +1226,27 @@ class tresorerie extends CommonObject
 		return $tab1;
 	}
 
+	public function pourcentage_cumul_charge($cumul_Charge, $cumul_Charge_prev)
+	{
+		$pourcentage = array();
+		foreach ($cumul_Charge_prev as $key => $value) {
+			if ($value==0) {
+				$pourcentage[$key] = "";
+			}
+			else{
+				$pourcentage[$key] = ((-$cumul_Charge[$key]+$cumul_Charge_prev[$key])/$cumul_Charge_prev[$key])*100;
+			}
+		}
+		return $pourcentage;
+	}
+
 	public function cumul_total_charge($total_charge)
 	{
 		$cumul_total_charge = 0;
-		foreach ($total_charge as $valeur) {
-			$cumul_total_charge += $valeur;
+		foreach ($total_charge as $key => $valeur) {
+			if($key<12){
+				$cumul_total_charge += $valeur;
+			}
 		}
 		return $cumul_total_charge;
 	}
@@ -1163,10 +1254,23 @@ class tresorerie extends CommonObject
 	public function cumul_total_charge_prev($total_charge_prev)
 	{
 		$cumul_total_charge_prev = 0;
-		foreach ($total_charge_prev as $valeur) {
-			$cumul_total_charge_prev += $valeur;
+		foreach ($total_charge_prev as $key => $valeur) {
+			if ($key < 12) {
+				$cumul_total_charge_prev += $valeur;
+			}
 		}
 		return $cumul_total_charge_prev;
+	}
+
+	public function pourcentage_cumul_total_charge($total_charge, $total_charge_prev)
+	{
+		if ($total_charge_prev == 0) {
+			$pourcentage = "";
+		}
+		else{
+			$pourcentage = ((-($total_charge) + $total_charge_prev)/(-$total_charge_prev))*100;
+		}
+		return $pourcentage;
 	}
 
 	public function cumul_solde_tresorerie($date_param = 0)
@@ -1180,7 +1284,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$sql = "SELECT soldeCourant, date FROM llx_tresorerie where type='reel' ORDER BY date ASC";
+		$sql = "SELECT soldeCourant, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_solde = array();
 		while($data = mysqli_fetch_assoc($res)){
@@ -1210,7 +1314,7 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
-		$sql = "SELECT soldeCourant, date FROM llx_tresorerie where type='prev' ORDER BY date ASC";
+		$sql = "SELECT soldeCourant, date FROM ".MAIN_DB_PREFIX."tresorerie where type='prev' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_solde = array();
 		while($data = mysqli_fetch_assoc($res)){
@@ -1229,36 +1333,57 @@ class tresorerie extends CommonObject
 		return $cumul_solde_tresorerie;
 	}
 
-
-	//Mettre cette méthode dans un autre fichier et créer l'autre pour supprimer une colonne et enfin créer un bouton pour l'ajout et la suppression!!!
-	public function ajoutCategorie($categ)
+	public function pourcentage_cumul_solde_tresorerie($cumul_solde_tresorerie, $cumul_solde_tresorerie_prev)
 	{
-		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
-		$replace = array("");
-		$sql = "SELECT * FROM llx_tresorerie LIMIT 1";
+		if ($cumul_solde_tresorerie_prev == 0) {
+			$pourcentage = "";
+		}
+		else{
+			$pourcentage = ((-($cumul_solde_tresorerie) + $cumul_solde_tresorerie_prev)/(-$cumul_solde_tresorerie_prev))*100;
+		}
+		return $pourcentage;
+	}
+
+	public function getNomEntreprise()
+	{
+		$sql = "SELECT label FROM ".MAIN_DB_PREFIX."entity where rowid='$this->entity'";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
-		$nb = mysqli_num_fields($res);
-		$row = array();
-		while ($data = mysqli_fetch_row($res)) {
-			for ($i=0; $i < $nb; $i++) {
-				$finfo = mysqli_fetch_field_direct($res, $i);
-				$row[] = $finfo->name;
-			}
+		$nom = mysqli_fetch_row($res)[0];
+		return $nom;
+	}
+
+	public function getCA_N_moins_1()
+	{
+		$date_N_1 = date("Y")-1;
+		$date_N = date("Y");
+		$sql = "SELECT date, CA FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' AND date >='$date_N_1-01-01' AND date<'$date_N-01-01' ORDER BY date ASC";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		$ca_N_moins_1 = array();
+		while ($data = mysqli_fetch_assoc($res)) {
+			$la_date = explode("-", $data['date']);
+			$ca_N_moins_1[$la_date[1]] = $data['CA']*(100/(20+100));
 		}
-		foreach ($categ as $value) {
-			if ($value != NULL) {
-				if (!in_array($value, $row)) {
-					$sql2 = "ALTER TABLE llx_tresorerie ADD $value DOUBLE AFTER rowid;";
-					mysqli_query($this->link, $sql2) or die (mysqli_error($this->link));
-				}
-			}
+		return $ca_N_moins_1;
+	}
+
+	public function getCA_N()
+	{
+		$date_N_1 = date("Y")+1;
+		$date_N = date("Y");
+		$sql = "SELECT date, CA FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' AND date <'$date_N_1-01-01' AND date>='$date_N-01-01' ORDER BY date ASC";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		$ca_N = array();
+		while ($data = mysqli_fetch_assoc($res)) {
+			$la_date = explode("-", $data['date']);
+			$ca_N[$la_date[1]] = $data['CA']*(100/(20+100));
 		}
+		return $ca_N;
 	}
 
 	//3 methode en desous pas utile pour l'instant, la methode getSolde() fait cela !!
 /*	public function up_tresorerie_Achat()
 	{
-		$sql = "SELECT b.amount, b.dateo FROM llx_bank as b, llx_bank_account as ba WHERE b.amount < 0 AND ba.entity = '$this->entity' order by b.dateo ASC";
+		$sql = "SELECT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount < 0 AND ba.entity = '$this->entity' order by b.dateo ASC";
 		$res = mysqli_query($sql) or die (mysqli_error());
 		while($data = mysqli_fetch_array($res, MYSQLI_ASSOC)){
 			$tableau_montant_categorie[] = $data;
@@ -1282,7 +1407,7 @@ class tresorerie extends CommonObject
 
 	public function up_tresorerie_CA()
 	{
-		$sql = "SELECT b.amount, b.dateo FROM llx_bank as b, llx_bank_account as ba WHERE b.amount > 0 AND ba.entity = '$this->entity' order by b.dateo ASC";
+		$sql = "SELECT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount > 0 AND ba.entity = '$this->entity' order by b.dateo ASC";
 		$res = mysqli_query($sql) or die (mysqli_error());
 		while($data = mysqli_fetch_array($res, MYSQLI_ASSOC)){
 			$tableau_montant_categorie[] = $data;
@@ -1309,7 +1434,7 @@ class tresorerie extends CommonObject
 	public function calcul_solde_tresorerie($tab_ca, $tab_achat)
 	{
 		if (date("Y-m") == date("Y")."-01") {
-			$query = "SELECT b.amount, b.dateo FROM llx_bank as b where fk_type='SOLD' order by dateo ASC;";
+			$query = "SELECT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b where fk_type='SOLD' order by dateo ASC;";
 			$res = mysqli_query($query)or die(mysqli_error());
 			while ($data = mysqli_fetch_assoc($res)) {
 				$dat = explode("-", $data['dateo']);
@@ -1318,7 +1443,7 @@ class tresorerie extends CommonObject
 			$le_calcul = round($tab_sold_init[$date]+$tab_ca[$date]+$tab_achat[$date], 2);
 		}
 		else{
-			$query = "SELECT soldeCourant FROM llx_tresorerie WHERE date >= '".date("Y")."-".(date("m")-1)."-01' AND date <= '".date("Y")."-".(date("m")-1)."-28' AND type='reel'";
+			$query = "SELECT soldeCourant FROM ".MAIN_DB_PREFIX."tresorerie WHERE date >= '".date("Y")."-".(date("m")-1)."-01' AND date <= '".date("Y")."-".(date("m")-1)."-28' AND type='reel'";
 			$res = mysqli_query($query)or die(mysqli_error());
 			while ($data = mysqli_fetch_assoc($res)) {
 				$le_solde_mois_precedent = $data['soldeCourant'];
@@ -1340,7 +1465,7 @@ class tresorerie extends CommonObject
 			$date = "$date_decoupe[2]-$date_decoupe[1]-$date_decoupe[0]";
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
-		$sql = "SELECT * FROM llx_tresorerie where type='reel' ORDER BY date ASC";
+		$sql = "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
 		$res = mysqli_query($sql) or die (mysqli_error());
 		$tableau_treso = array();
 		$i = 0;

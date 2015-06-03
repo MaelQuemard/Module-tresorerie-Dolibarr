@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2015	Mael Quemard
+/* Copyright (C) 2015	Mael Quemard	<quemard.mael@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -140,6 +140,7 @@ if(isset($_GET['re'])){
 	$cumul = $tresorerie->calcul_ca_cumule($_GET['re']);
 	$tva_collecte = $tresorerie->getTVACollecte($_GET['re']);
 	$tva_due = $tresorerie->getTVADeductible($_GET['re']);
+	$tva_payer = $tresorerie->getTVAPayer($_GET['re']);
 	$cumul_CA = $tresorerie->cumul_CA($_GET['re']);
 	$cumul_achat = $tresorerie->cumul_achat($_GET['re']);
 	$cumul_Charge = $tresorerie->cumul_Charge($taux, $_GET['re']);
@@ -164,6 +165,7 @@ else{
 	$cumul = $tresorerie->calcul_ca_cumule();
 	$tva_collecte = $tresorerie->getTVACollecte();
 	$tva_due = $tresorerie->getTVADeductible();
+	$tva_payer = $tresorerie->getTVAPayer();
 	$cumul_CA = $tresorerie->cumul_CA();
 	$cumul_achat = $tresorerie->cumul_achat();
 	$cumul_Charge = $tresorerie->cumul_Charge($taux);
@@ -179,14 +181,23 @@ if (isset($_GET['synchro'])) {
 	$tresorerie->calcul_reel_futur();
 	$tresorerie->calcul_solde_tresorerie_reel_futur($categorie);
 }
+
+$tva_solde = $tresorerie->calculSoldeTVA($tva_due, $tva_collecte, $tva_payer);
 $encoursFourn = $tresorerie->getEncoursFournisseur();
 $cumul_total_charge = $tresorerie->cumul_total_charge($charge_total);
-$tresorerie->ajoutCategorie($categorie2);
+$cumul_total_charge_prev = $tresorerie->cumul_total_charge_prev($charge_total_prev);
+$pourcentage_cumul_charge = $tresorerie->pourcentage_cumul_charge($cumul_Charge, $cumul_Charge_prev);
+$pourcentage_cumul_achat = $tresorerie->pourcentage_cumul_achat($cumul_achat, $cumul_achat_prev);
+$pourcentage_cumul_ca = $tresorerie->pourcentage_cumul_ca($cumul_CA, $cumul_CA_prev);
+$pourcentage_cumul_total_charge = $tresorerie->pourcentage_cumul_total_charge($cumul_total_charge, $cumul_total_charge_prev);
+$pourcentage_cumul_solde_tresorerie = $tresorerie->pourcentage_cumul_solde_tresorerie($cumul_solde, $cumul_solde_prev);
+$nom = $tresorerie->getNomEntreprise();
 
 $mois = array("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre");
 $moisPrecedent = array();
 ?>
 	<script type="text/javascript" src="js/script.js"></script>
+	<script type="text/javascript" src="js/coloration.js"></script>
     <table class="notopnoleftnoright" border="0" style="margin-bottom: 2px;">
         <tbody>
             <tr>
@@ -198,7 +209,21 @@ $moisPrecedent = array();
                 </td>
                 <td class="nobordernopadding">
                 <form action="#">
+                	<input type="hidden" name="account" value="1"></input>
                 	<input type="submit" name="synchro" value="Sychroniser"></input>
+                </form>
+                </td>
+                <td class="nobordernopadding">
+                	<?php
+                	if (isset($_GET['re'])) {
+                		echo "<form action='generatePDF.php?re=".$_GET['re']."' method='post' target='_blank'>";
+                		echo "<a target='_blank' href='generatePDF.php?re=".$_GET['re']."'><img src='pdf.jpeg' alt='Télécharger le pdf' style='width:65%;'></img></a>";
+                	}
+                	else{
+                		echo "<form action='generatePDF.php' method='post' target='_blank'>";
+                		echo "<a target='_blank' href='generatePDF.php'><img src='pdf.jpeg' alt='Télécharger le pdf' style='width:65%;'></img></a>";
+                	}
+                ?>
                 </form>
                 </td>
             </tr>
@@ -217,11 +242,11 @@ $moisPrecedent = array();
             </form>
             <b>*Il est préferable de choisir le premier de chaque mois</b>
             <form action="#" method="post">
-                <table class="border nohover" width="100%">
+                <table id="tableau" class="border nohover" width="100%">
                     <tbody>
                         <tr class="liste_titre">
                             <td class="center">
-                                SARL
+                                <?php echo $nom; ?>
                             </td>
                             <?php
                                 if (isset($_GET['re'])) {
@@ -230,7 +255,7 @@ $moisPrecedent = array();
                                     foreach ($mois as $key => $value) {
                                         if ($date_Debut[1] <= $key+1) {
                                             ?>
-                                                <td class="center" colspan="2"><?php echo $value." - ".$date_Debut[2]; ?></td>
+                                                <td class="center" colspan="2"><b><?php echo $value." - ".$date_Debut[2]; ?></b></td>
                                             <?php
                                         }
                                         else {
@@ -240,16 +265,17 @@ $moisPrecedent = array();
                                     }
                                     for ($i=0; $i <= sizeof($moisPrecedent)-1; $i++) { 
                                         ?>
-                                            <td class="center" colspan="2"><?php echo $mois[$i]." - ".(intval($date_Debut[2])+1); ?></td>
+                                            <td class="center" colspan="2"><b><?php echo $mois[$i]." - ".(intval($date_Debut[2])+1); ?></b></td>
                                         <?php
                                     }
-                                    ?> <td class="center" colspan="2">Cumul</td> <?php
+                                    ?> <td class="center" colspan="2"><b>Cumul</b></td>
+                                    <td class="center" colspan="2" style="padding:0px 10px 0px 10px;"><b>%</b></td> <?php
                                 }
                                 else{
                                     for ($i=0; $i <= 12; $i++) {
                                         if ($i >= $moisM) {
                                         ?>
-                                            <td class="center" colspan="2"><?php echo $mois[$i-1]." - ".$annee; ?></td>
+                                            <td class="center" colspan="2"><b><?php echo $mois[$i-1]." - ".$annee; ?></b></td>
                                         <?php
                                         }
                                         else {
@@ -258,10 +284,11 @@ $moisPrecedent = array();
                                     }
                                     for ($i=0; $i < sizeof($moisPrecedent)-1; $i++) { 
                                         ?>
-                                            <td class="center" colspan="2"><?php echo $mois[$i]." - ".(intval($annee)+1); ?></td>
+                                            <td class="center" colspan="2"><b><?php echo $mois[$i]." - ".(intval($annee)+1); ?></b></td>
                                         <?php
                                     }
-                                    ?> <td class="center" colspan="2">Cumul</td> <?php
+                                    ?> <td class="center" colspan="2"><b>Cumul</b></td>
+                                    <td class="center" colspan="2" style="padding:0px 10px 0px 10px;"><b>%</b></td> <?php
                                 }
                             ?>
                         </tr>
@@ -275,14 +302,15 @@ $moisPrecedent = array();
                                     Prévisonnel
                                 </td>
                                 <td style="padding:0px 20px 0px 20px">
-                                	Réel
+                                	<b>Réel</b>
                                 </td>
                                     <?php
                                 }
                             ?>
+                            	<td></td>
                         </tr>
                         <tr class="impair">
-                            <td class="right">Solde inital (TTC)</td>
+                            <td class="right"><b>Solde inital (TTC)</b></td>
                             <?php for ($j=0; $j < 24; $j++) {
 	                            	for($i=0; $i< 24; $i++){
 		                        		foreach($tresoPrev as $truc => $key){
@@ -314,7 +342,7 @@ $moisPrecedent = array();
 		                    					$val = ($truc*2)-1;
 		                                        $val2 = $j-2;
 		                    					if($row == "soldeDebut" && $val==$val2 && $truc<12){
-		                    						echo "<td>".price($value)/*round($value, 2)*/."</td>";
+		                    						echo "<td><b>".price($value)/*round($value, 2)*/."</b></td>";
 		                    						$j++;
 		                    					}
 		                    				}
@@ -347,9 +375,10 @@ $moisPrecedent = array();
                         	?>
                         	<td></td>
                         	<td></td>
+                        	<td></td>
                         </tr>
                         <tr>
-                            <td class="right">Chiffre d'affaires (HT)</td>
+                            <td class="right"><b>Chiffre d'affaires (HT)</b></td>
                             <?php for ($j=0; $j < 25; $j++) {
 	                            	for($i=0; $i< 25; $i++){
 		                        		foreach($tresoPrev as $truc => $key){
@@ -374,7 +403,7 @@ $moisPrecedent = array();
 		                    					$val = ($truc*2)-1;
 		                                        $val2 = $j-2;
 		                    					if($row == "CA" && $val==$val2 &&$truc<12){
-		                    						echo "<td>".price(round($value*(100/(20+100)), 2))."</td>";
+		                    						echo "<td><b>".price(round($value*(100/(20+100)), 2))."</b></td>";
 		                    						$j++;
 		                    					}
 		                    				}
@@ -393,7 +422,7 @@ $moisPrecedent = array();
 			                            }
 			                            else{
 			                            	echo "<td>".price($cumul_CA_prev)."</td>";
-	                            			echo "<td>".price($cumul_CA*(100/(20+100)))."</td>";
+	                            			echo "<td><b>".price(round($cumul_CA*(100/(20+100))),2)."</b></td>";
 			                            }									
 	                       			}
 	                       			else{
@@ -408,18 +437,24 @@ $moisPrecedent = array();
 	                            	$date_test = explode("-", date("d-m-Y"));
 	                            	$date_test[1]--;
 	                            }
+	                            if ($pourcentage_cumul_ca != 0) {
+	                            	echo "<td style='color:red'>".round($pourcentage_cumul_ca,2)."</td>";
+	                            }
+	                            else{
+	                            	echo "<td style='color:green'>".round($pourcentage_cumul_ca,2)."</td>";
+	                            }
                         	?>
                         </tr>
                         <tr class="liste_titre">
-                            <td>Charge</td>
-                            <?php for ($i=0; $i < 26; $i++) {?><td></td> <?php } ?>
+                            <td><b>Charge</b></td>
+                            <?php for ($i=0; $i < 27; $i++) {?><td></td> <?php } ?>
                         </tr>
                         <tr class="liste_titre" style=" opacity: 0.7;">
-                            <td>Achats (HT)</td>
-                             <?php for ($i=0; $i < 26; $i++) {?><td></td> <?php } ?>
+                            <td><b>Achats (HT)</b></td>
+                             <?php for ($i=0; $i < 27; $i++) {?><td></td> <?php } ?>
                         </tr>
                         <tr>
-                            <td class="right">Total des achats</td>
+                            <td class="right"><b>Total des achats</b></td>
                             <?php 
                         		for ($j=0; $j < 25; $j++) {
 	                            	for($i=0; $i< 25; $i++){
@@ -445,7 +480,7 @@ $moisPrecedent = array();
 		                    					$val = ($truc*2)-1;
 		                                        $val2 = $j-2;
 		                    					if($row == "achat" && $val==$val2 && $truc<12){
-		                    						echo "<td>".price(round($value*(100/(20+100)), 2))."</td>";
+		                    						echo "<td><b>".price(round($value*(100/(20+100)), 2))."</b></td>";
 		                    						$j++;
 		                    					}
 		                    				}
@@ -464,7 +499,7 @@ $moisPrecedent = array();
 			                            }
 			                            else{
 			                            	echo "<td>".price(round($cumul_achat_prev, 2))."</td>";
-	                           				echo "<td>".price(round($cumul_achat*(100/(20+100)), 2))."</td>";
+	                           				echo "<td><b>".price(round($cumul_achat*(100/(20+100)), 2))."</b></td>";
 			                            }
 	                       			}
 	                       			else{
@@ -479,29 +514,36 @@ $moisPrecedent = array();
 	                            	$date_test = explode("-", date("d-m-Y"));
 	                            	$date_test[1]--;
 	                            }
+	                            if ($pourcentage_cumul_achat != 0) {
+	                            	echo "<td style='color:red'>".round($pourcentage_cumul_achat,2)."</td>";
+	                            }
+	                            else{
+	                            	echo "<td style='color:green'>".round($pourcentage_cumul_achat,2)."</td>";
+	                            }
                             ?>
                         </tr>
                         <tr class="liste_titre" style=" opacity: 0.7;">
-                            <td>Charges fixes (HT)</td>
-                             <?php for ($i=0; $i < 26; $i++) {?><td></td> <?php } ?>
+                            <td><b>Charges fixes (HT)</b></td>
+                             <?php for ($i=0; $i < 27; $i++) {?><td></td> <?php } ?>
                         </tr>
                         <?php
                             $index = 0;
                             $class = array("pair", "impair");
                             $search = array(',', '-', '(', ')', ' ', '/', "'", '+');
 							$replace = array("");
+							$j_passe = 0;
 							for ($i=0; $i < sizeof($categorie); $i++) { 
 								($i%2==0) ? $t = $class[0] : $t = $class[1];
 								?>
                                     <tr <?php echo "class=\"$t\""; ?>>
                                     <?php
-                                   		for ($j=0; $j < 25; $j++) { 
+                                   		for ($j=0; $j <= 25; $j++) { 
                                    			if ($j==0) {
                                    				?><td class="right"><?php echo $categorie[$i]; ?></td><?php
                                    			}
                                    			$categorie[$i] = str_replace($search, $replace, $categorie[$i]);
-                                        	for ($x=0; $x < 24; $x++) {
-                                        		if ($j<23) {
+	                                        if ($j <24) {
+	                                        	for ($x=0; $x < 24; $x++) {
 	                                        		foreach ($tresoPrev as $key => $ligne_par_mois) {
 		                                        		$val = $key*2;
 				                                    	$val2 = $j;
@@ -525,46 +567,48 @@ $moisPrecedent = array();
 		                                        		$val2 = $j-2;
 		                                        		foreach ($ligne_par_mois as $categTTC => $valueTTC) {
 															if ($categTTC == $categorie[$i] && $val==$val2) {
-																echo "<td>".str_replace("-", "",price($valueTTC))/*round($valueTTC, 2))*/."</td>";
+																echo "<td><b>".str_replace("-", "",price($valueTTC))/*round($valueTTC, 2))*/."</b></td>";
 																$j_passe = $j;
 																$j++;
 															}
 														}
 		                                        	}
-		                                        }
-                               				}
-                                   			if($j%2==0){
-                                   				if ($date_test[1] >= 12) {
-													$date_test[1]=1;
-													$date_test[2]++;
-												}
-												else{
-													$date_test[1]++;
-					                            }
-					                            if ($j<23) {
-					                            	echo "<td class=\"prev\" data-id=\"$categorie[$i];$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"$categorie[$i];$i;$j\"></input></td>";
-					                            }
-			                       			}
-                                   			else{
-                                   				echo "<td></td>";
+	                               				}
+	                                   			if($j%2==0){
+	                                   				if ($date_test[1] >= 12) {
+														$date_test[1]=1;
+														$date_test[2]++;
+													}
+													else{
+														$date_test[1]++;
+						                            }
+						                            if ($j<23) {
+						                            	echo "<td class=\"prev\" data-id=\"$categorie[$i];$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"$categorie[$i];$i;$j\"></input></td>";
+						                            }
+				                       			}
+	                                   			else{
+	                                   				echo "<td></td>";
+	                                   			}
                                    			}
-                                   			
-                                   			if($j>=23){
+                                   			if($j>23){
                                    				$non = false;
                                    				foreach ($cumul_Charge_prev as $categ => $value) {
 				                            		if ($categ == $categorie[$i]) {
-				                            			if ($j==23 || $j_passe==23) {
+				                            			if ($j==24/* || $j_passe==23*/) {
 				                            				if ($value == NULL) {
 				                            					echo "<td class=\"prev\"></td>";
 				                            				}else{
 				                            					echo "<td class=\"prev\">".str_replace("-", "", price($value))."</td>";
 				                            				}
+				                            				//$j_passe++;
+				                            				$j++;
 				                            			}
 				                            		}
 				                            		elseif(!array_key_exists($categorie[$i], $cumul_Charge_prev)){
-				                            			if ($j==23 && !$non) {
+				                            			if ($j==24 && !$non) {
 				                            				echo "<td class=\"prev\"></td>";
 				                            				$non = true;
+				                            				//$j++;
 				                            			}
 				                            			elseif ($i_passe == $i-1) {
 				                            				$non = false;
@@ -575,19 +619,34 @@ $moisPrecedent = array();
 				                            	$non = false;
                                    				foreach ($cumul_Charge as $categ => $value) {
 				                            		if ($categ == $categorie[$i]) {
-				                            			if ($j==24 || $j_passe==24) {
-				                            				echo "<td>".str_replace("-", "", price($value))."</td>";
+				                            			if ($j==25 || $j_passe==25) {
+				                            				echo "<td><b>".str_replace("-", "", price($value))."</b></td>";
+				                            				$j_passe++;
+				                            				$j++;
 				                            			}
 				                            		}
 				                            		elseif(!array_key_exists($categorie[$i], $cumul_Charge)){
-				                            			if ($j==24 && !$non) {
+				                            			if ($j==25 && !$non) {
 				                            				echo "<td></td>";
+				                            				$j++;
 				                            				$non = true;
 				                            			}
 				                            			elseif ($i_passe == $i-1) {
 				                            				$non = false;
 				                            			}
 				                            			$i_passe = $i;
+				                            		}
+				                            	}
+				                            }
+				                            if ($j==26) {
+				                            	foreach ($pourcentage_cumul_charge as $categ => $value) {
+				                            		if ($categ == $categorie[$i]) {
+				                            			if ($value != 0) {
+				                            				echo "<td style='color:red'>".round($value,2)."</td>";
+				                            			}
+				                            			else{
+				                            				echo "<td style='color:green'>".round($value,2)."</td>";
+				                            			}
 				                            		}
 				                            	}
 				                            }
@@ -606,7 +665,7 @@ $moisPrecedent = array();
                         }
                     ?>
                     <tr class="liste_titre" style=" opacity: 0.7;">
-                    	<td>Total charges (HT)</td>
+                    	<td><b>Total charges (HT)</b></td>
                     	<?php
                     	for ($j=0; $j < 25; $j++) {
 	                            	for($i=0; $i< 24; $i++){
@@ -637,7 +696,7 @@ $moisPrecedent = array();
 		                    						if ($key == 0) {
 														echo "<td></td>";
 													}else{
-	                    								echo "<td>".price($key)/*round($key, 2)*/."</td>";
+	                    								echo "<td><b>".price($key)/*round($key, 2)*/."</b></td>";
 	                    							}
 		                    						$j++;
 		                    					}
@@ -656,8 +715,8 @@ $moisPrecedent = array();
 			                            	echo "<td></td>";
 			                            }
 			                            else{
-			                            	echo "<td></td>";
-			                            	echo "<td>".price($cumul_total_charge)."</td>";
+			                            	echo "<td>".price($cumul_total_charge_prev)."</td>";
+			                            	echo "<td><b>".price($cumul_total_charge)."</b></td>";
 			                            }
 	                       			}
 	                       			else{
@@ -672,10 +731,16 @@ $moisPrecedent = array();
 	                            	$date_test = explode("-", date("d-m-Y"));
 	                            	$date_test[1]--;
 	                            }
+	                            if ($pourcentage_cumul_total_charge != 0) {
+	                            	echo "<td style='color:red'>".round($pourcentage_cumul_total_charge,2)."</td>";
+	                            }
+	                            else{
+	                            	echo "<td style='color:green'>".round($pourcentage_cumul_total_charge,2)."</td>";
+	                            }
                     	?>
                     </tr>
                     <tr class="liste_titre">
-                            <td class="right">Solde du mois (TTC)</td>
+                            <td class="right"><b>Solde du mois (TTC)</b></td>
                             <?php for ($j=0; $j < 25; $j++) {
 	                            	for($i=0; $i< 24; $i++){
 		                        		foreach($tresoPrev as $truc => $key){
@@ -706,7 +771,7 @@ $moisPrecedent = array();
 		                    					$val = ($truc*2)-1;
 		                                        $val2 = $j-2;
 		                    					if($row == "soldeCourant" && $val==$val2){
-		                    						echo "<td>".price($value)/*round($value, 2)*/."</td>";
+		                    						echo "<td><b>".price($value)/*round($value, 2)*/."</b></td>";
 		                    						$j++;
 		                    					}
 		                    				}
@@ -724,8 +789,8 @@ $moisPrecedent = array();
 											echo "<td class=\"prev\" data-id=\"soldeCourant;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"soldeCourant;$j\"></input></td>";
 	                       				}
 	                       				else{
-	                       					echo "<td></td>";
-	                       					echo "<td>".price($cumul_solde)."</td>";
+	                       					echo "<td>".price($cumul_solde_prev)."</td>";
+	                       					echo "<td><b>".price($cumul_solde)."</b></td>";
 	                       				}
 	                       			}
 	                       			else{
@@ -739,6 +804,12 @@ $moisPrecedent = array();
 	                            else{
 	                            	$date_test = explode("-", date("d-m-Y"));
 	                            	$date_test[1]--;
+	                            }
+	                            if ($pourcentage_cumul_total_charge != 0) {
+	                            	echo "<td style='color:red'>".round($pourcentage_cumul_solde_tresorerie,2)."</td>";
+	                            }
+	                            else{
+	                            	echo "<td style='color:green'>".round($pourcentage_cumul_solde_tresorerie,2)."</td>";
 	                            }
                         	?>
                         </tr>
@@ -802,7 +873,7 @@ $moisPrecedent = array();
 	                    					$val = ($truc*2)-1;
 	                                        $val2 = $j-2;
 											if($val==$val2 && $truc<12){
-                    							echo "<td colspan=\"2\" class=\"center\">".str_replace("-", "", price($key))."</td>";
+                    							echo "<td colspan=\"2\" class=\"center\">".price(str_replace("-", "", round($key,2)))."</td>";
                     							$j++;
                     						}
 		                    				
@@ -818,7 +889,23 @@ $moisPrecedent = array();
 	                    					$val = ($truc*2)-1;
 	                                        $val2 = $j-2;
 											if($val==$val2 && $truc<12){
-                    							echo "<td colspan=\"2\" class=\"center\">".str_replace("-", "", price($key))."</td>";
+                    							echo "<td colspan=\"2\" class=\"center\">".price(str_replace("-", "", round($key,2)))."</td>";
+                    							$j++;
+                    						}
+		                    				
+		                    			}
+			                    	}
+	                    	?>
+	                    </tr>
+	                    <tr class="liste_titre">
+	                    	<td>Solde TVA</td>
+	                    	<?php
+	                    		for ($j=0; $j < 24; $j++) {
+		                        		foreach($tva_solde as $truc => $key){
+	                    					$val = ($truc*2)-1;
+	                                        $val2 = $j-2;
+											if($val==$val2 && $truc<12){
+                    							echo "<td colspan=\"2\" class=\"center\">".price(round($key,2))."</td>";
                     							$j++;
                     						}
 		                    				
@@ -831,8 +918,13 @@ $moisPrecedent = array();
             <input type="submit" id="button">
         </form>
     </div>
+    </div>
 <?php
-
+if(isset($_GET['re'])){
+	if (isset($_POST['generatePDF'])) {
+		
+	}
+}
 $facturestatic=new Facture($db);
 
 if ($_REQUEST["account"])
@@ -1056,6 +1148,25 @@ if ($action == 'list')
 
     print '</table>'."\n";
 }
+
+include('phpGraph/phpGraph.php');
+//We call an instance of phpGraph() class
+$ca_N_moins_1 = $tresorerie->getCA_N_moins_1();
+$ca_N = $tresorerie->getCA_N();
+$tab = array($ca_N, $ca_N_moins_1);
+$G = new phpGraph();
+$options = array(
+	'steps' => 1000,
+  'width' => 700,// (int) width of grid
+  'height' => 700,// (int) height of grid
+  'multi'=>true,
+  'filled'=>false,
+  'stroke' => array(
+                '0'=>'red',
+                '1'=>'blue'
+    )
+);
+echo $G->draw($tab, $options);
 
 
 

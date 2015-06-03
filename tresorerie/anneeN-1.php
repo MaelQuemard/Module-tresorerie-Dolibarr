@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2015   Mael Quemard
+/* Copyright (C) 2015   Mael Quemard    <quemard.mael@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ if ($action == 'add')
 * Put here all code to build page
 ****************************************************/
 
-llxHeader('','MyPageName','');
+llxHeader('','Importation','');
 
 $form=new Form($db);
 // Put here content of your page
@@ -128,7 +128,7 @@ $link = $connect->link();
             </form>
         </div>
         <div class="fichethirdleft">
-            <form action="" method="get">
+            <form action="telecharger.php" method="get">
                 <table class="noborder nohover" width="100%">
                     <tbody>
                         <tr class="liste_titre">
@@ -138,7 +138,7 @@ $link = $connect->link();
                         </tr>
                         <tr>
                             <td>
-                                <input type="text" name="nom">
+                                <input type="text" name="nom" placeholder="Nom du fichier">
                             </td>
                             <td>
                                 <input class="button" type="submit">
@@ -265,41 +265,6 @@ $link = $connect->link();
             <?php 
             fclose($fp);
     }
-    if (isset($_GET['nom'])) {
-        $sql = "SELECT * FROM llx_tresorerie LIMIT 1";
-        $res = mysqli_query($link, $sql) or die (mysqli_error($link));
-        $nb = mysqli_num_fields($res);
-        $string = "";
-        while ($data = mysqli_fetch_row($res)) {
-            for ($i=0; $i < $nb; $i++) {
-                $finfo = mysqli_fetch_field_direct($res, $i);
-                $string .= $finfo->name.",";
-            }
-        }
-        //!!!
-        //!!!!!! Pour pouvoir écrire il faut donner les permissions de lecture et d'ériture au dossier !!!!!!
-        //!!!
-        $file = $_GET['nom'].".csv";
-        $f = fopen($file, "w");
-        fwrite($f, $string);
-        ?>
-            <div class="jnotify-container">
-                <div class="jnotify-notification jnotify-notification-success">
-                    <div class="jnotify-background"></div>
-                        <a onclick="fonction()" class="jnotify-close">
-                           ×
-                        </a>
-                    <div class="jnotify-message">
-                        <div>
-                            Votre fichier à été généré au chemin suivant : <?php echo realpath($_GET['nom'].'.csv'); ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <?php 
-        fclose($f);
-    }
-
 
 // Example 1 : Adding jquery code
 print '<script type="text/javascript" language="javascript">

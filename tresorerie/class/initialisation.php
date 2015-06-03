@@ -1,5 +1,5 @@
 <?php 
-/* Copyright (C) 2015	Mael Quemard
+/* Copyright (C) 2015	Mael Quemard	<quemard.mael@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,14 @@ class initialisation extends CommonObject
 			$this->categorie[] = $data['label'];
 		}
 		return $this->categorie;
+	}
+
+	public function getNbLignes()
+	{
+		$query_categ = "SELECT label FROM `llx_bank_categ` ORDER BY `label` ASC;";
+		$resultat = mysqli_query($this->link, $query_categ) or die (mysqli_error($this->link));
+		$nb = mysqli_num_rows($resultat);
+		return $nb;
 	}
 
 	public function createTable()
@@ -317,6 +325,56 @@ class initialisation extends CommonObject
 			mysqli_query($this->link, $query_rempli_reel)or die(mysqli_error($this->link));	
 		}
 	}
+
+	//Mettre cette méthode dans un autre fichier et créer l'autre pour supprimer une colonne et enfin créer un bouton pour l'ajout et la suppression!!!
+	public function ajoutCategorie($categ)
+	{
+		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
+		$replace = array("");
+		$sql = "SELECT * FROM llx_tresorerie LIMIT 1";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		$nb = mysqli_num_fields($res);
+		$row = array();
+		while ($data = mysqli_fetch_row($res)) {
+			for ($i=0; $i < $nb; $i++) {
+				$finfo = mysqli_fetch_field_direct($res, $i);
+				$row[] = $finfo->name;
+			}
+		}
+		foreach ($categ as $value) {
+			if ($value != NULL) {
+				if (!in_array($value, $row)) {
+					$sql2 = "ALTER TABLE llx_tresorerie ADD $value DOUBLE AFTER rowid;";
+					mysqli_query($this->link, $sql2) or die (mysqli_error($this->link));
+				}
+			}
+		}
+	}
+
+	public function supprmierCategorie($categ)
+	{
+		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
+		$replace = array("");
+		$sql = "SELECT * FROM llx_tresorerie LIMIT 1";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		$nb = mysqli_num_fields($res);
+		$row = array();
+		while ($data = mysqli_fetch_row($res)) {
+			for ($i=0; $i < $nb; $i++) {
+				$finfo = mysqli_fetch_field_direct($res, $i);
+				$row[] = $finfo->name;
+			}
+		}
+		foreach ($row as $value) {
+			if ($value != NULL) {
+				if (!in_array($value, $categ) && $value != "CA" && $value != "rowid" && $value != "date" && $value != "soldeCourant" && $value != "soldeDebut" && $value != "type" && $value != "achat") {
+					$sql2 = "ALTER TABLE llx_tresorerie DROP $value;";
+					mysqli_query($this->link, $sql2) or die (mysqli_error($this->link));
+				}
+			}
+		}
+	}
+
 
 }
 

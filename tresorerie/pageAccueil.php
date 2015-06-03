@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2015 Mael Quemard
+/* Copyright (C) 2015 Mael Quemard  <quemard.mael@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@ if (! $res) die("Include of main fails");
 // Change this following line to use the correct relative path from htdocs
 require_once 'class/connect.php';
 include_once DOL_DOCUMENT_ROOT .'/tresorerie/class/initialisation.php';
+include_once DOL_DOCUMENT_ROOT .'/tresorerie/class/modificationTable.php';
 dol_include_once('/module/class/skeleton_class.class.php');
 
 // Load traductions files requiredby by page
@@ -89,54 +90,8 @@ $form=new Form($db);
 $connect = new connect($dolibarr_main_db_host, $dolibarr_main_db_name, $dolibarr_main_db_user ,$dolibarr_main_db_pass);
 $link = $connect->link();
 ?>
-<style type="text/css">
-.mycss
-{
-font-weight:normal;
-color:#7B7B7B;
-letter-spacing:1pt;
-word-spacing:2pt;
-font-size:19px;
-text-align:center;
-font-family:helvetica, sans-serif;
-line-height:1;
-}
-.btn {
-  background: #3498db;
-  background-image: -webkit-linear-gradient(top, #3498db, #2980b9);
-  background-image: -moz-linear-gradient(top, #3498db, #2980b9);
-  background-image: -ms-linear-gradient(top, #3498db, #2980b9);
-  background-image: -o-linear-gradient(top, #3498db, #2980b9);
-  background-image: linear-gradient(to bottom, #3498db, #2980b9);
-  -webkit-border-radius: 28;
-  -moz-border-radius: 28;
-  border-radius: 28px;
-  font-family: Arial;
-  color: #ffffff;
-  font-size: 20px;
-  padding: 10px 20px 10px 20px;
-  text-decoration: none;
-}
-
-.btn:hover {
-  background: #3cb0fd;
-  background-image: -webkit-linear-gradient(top, #3cb0fd, #3498db);
-  background-image: -moz-linear-gradient(top, #3cb0fd, #3498db);
-  background-image: -ms-linear-gradient(top, #3cb0fd, #3498db);
-  background-image: -o-linear-gradient(top, #3cb0fd, #3498db);
-  background-image: linear-gradient(to bottom, #3cb0fd, #3498db);
-  text-decoration: none;
-}
-div .form{
-    background-color: #EDEDED;
-    border-radius: 28px;
-    height: 150px;
-    text-align: center;
-    width: 50%;
-}
-</style>
-
-    <table class="notopnoleftnoright" border="0" style="margin-bottom: 2px;">
+<link rel="stylesheet" type="text/css" href="style/style.css">
+      <table class="notopnoleftnoright" border="0" style="margin-bottom: 2px;">
         <tbody>
             <tr>
                 <td class="nobordernopadding hideonsmartphone" width="40" valign="middle" align="left">
@@ -157,6 +112,15 @@ div .form{
     </div>
     </center>
 
+    <center>
+    <div class="form">
+        <form action="#" method="get">
+            <p class="mycss">Avez vous ajouté ou supprimé une categorie ?</p>
+            <input type="submit" class="btnAjout" name="maj" value="Mettre à jour"></input>
+        </form>
+    </div>
+    </center>
+
 
 <?php
 if (isset($_GET['init'])) {
@@ -169,6 +133,21 @@ if (isset($_GET['init'])) {
     $categ = $init->getCategorie();
     $tab_charge = $init->getCharge_test($categ);
     $init->calcul_solde_tresorerie($tab_ca, $tab_achat, $tab_charge);
+}
+
+$modif = new modificationTable($link);
+$nb_lignes = $modif->getNbLignes();
+$categorie = $modif->getCategorie();
+$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
+$replace = array("");
+$categorie2 = array();
+for ($i=0; $i <= $nb_lignes; $i++) { 
+  $categorie2[$i] = str_replace($search, $replace, $categorie[$i]);
+}
+
+if (isset($_GET['maj'])) {
+  $modif->ajoutCategorie($categorie2);
+  $modif->supprimerCategorie($categorie2);
 }
 
 // Example 1 : Adding jquery code
