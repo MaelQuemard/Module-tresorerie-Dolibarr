@@ -16,9 +16,13 @@
  */
 
 /**
- *	\file       htdocs/tresorerie/class/tresorerie.php
- *	\ingroup    tresorerie
- *	\brief      File of class to manage tresorerie
+ *	Class tresorerie is used for everything related to the dashboard
+ *
+ *	@filesource /htdocs/tresorerie/class/tresorerie.php
+ *	@package Class
+ *	@licence http://www.gnu.org/licenses/ GPL
+ *	@version Version 1.0
+ *	@author Maël Quémard
  */
 class tresorerie extends CommonObject
 {
@@ -38,17 +42,31 @@ class tresorerie extends CommonObject
 	var $taux = array();
 	var $link;
 
-	function __construct($db, $leink)
+	/**
+	 *	This is the contructor of class, get the link of connection (database)
+	 *	
+	 *	@param Object $leink
+	 *	@global object $conf
+	 *	@global object $langs
+	 *	@var int $this->entity number of entity
+	 *	@var date $this->date this var includes year, month, day
+	 *	@var date $this->dateD this var includes year, month
+	 */
+	function __construct($leink)
 	{
 		global $conf, $langs;
 		$this->link = $leink;
 		$this->entity = $conf->entity;
-        $this->db = $db;
         $this->date = date("Y-m-d");
         $this->dateD = date("Y-m");
 	}
 
 	//Selectionne et calcule le solde du mois courant
+	/**
+	 * This method get cash balance for the current month
+	 *
+	 *	@return double $this->solde
+	 */
 	public function getSolde()
 	{
 		$sql = "SELECT sum(b.amount) as amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.fk_account = 1 AND b.dateo <= '$this->date' AND ba.entity = '$this->entity' ";
@@ -59,7 +77,12 @@ class tresorerie extends CommonObject
 		return $this->solde;
 	}
 
-	//Selectionne et calcule la somme su chiffre d'affaire du mois courant
+	//Selectionne et calcule la somme du chiffre d'affaire du mois courant
+	/**
+	 *	This method get sum of fixed charges
+	 *
+	 *	@return int $this->charge
+	 */
 	public function getTotalCharge()
 	{
 		$sql = "SELECT DISTINCT SUM(amount) as a FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND bclass.lineid = b.rowid";
@@ -71,6 +94,11 @@ class tresorerie extends CommonObject
 	}
 
 	//Selcetionne le label des catégories, le montant et la date selon si c'est dans le mois courant et le montant selon si il est rangé dans une catégorie
+	/**
+	 *	This method get amount by category (fixed charges)
+	 *
+	 *	@return array $this->montant_Categ
+	 */
 	public function getMontantCategorie()
 	{
 		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND ct.fk_bank_categ = bcat.rowid";
@@ -78,25 +106,87 @@ class tresorerie extends CommonObject
 		while ($data = mysqli_fetch_assoc($res)) {
 			//calcul permettant d'avoir le montant HT
 			//$amount = $data['amount']*(100/($data['taux']+100));
-			$this->montant_Categ[$data['label']] = $this->montant_Categ[$data['label']]+$data['amount'];
+			if ($data['label']!="CA Ventes 10" && $data['label']!="CA Ventes 20") {
+				$this->montant_Categ[$data['label']] = $this->montant_Categ[$data['label']]+$data['amount'];
+			}
 		}
 
 		return $this->montant_Categ;
 	}
 
 	//Selectionne le chiffre d'affaire, plus précisement le nombre d'entrée d'argent et on additionne tous cela pour obtenir le CA du mois courant
+	/**
+	 *	This method get turnover
+	 *
+	 *	@return double $this->ca
+	 */
 	public function getCA()
 	{
 		//$sql = "SELECT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount > 0 AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity'";
-		$sql = "SELECT DISTINCT b.amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount > 0 AND b.dateo <= '$this->date'AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity';";
+		$sql = "SELECT DISTINCT b.amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount >= 0 AND b.dateo <= '$this->date'AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity';";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
-			$this->ca += $data['amount'];
+			$this->ca += round($data['amount']*(100/(20+100)), 2);
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 20';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$this->ca += round($data['amount']*(100/(20+100)), 2);
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 10';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$this->ca += round($data['amount']*(100/(10+100)), 2);
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 0';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$this->ca += round($data['amount'], 2);
 		}
 		return $this->ca;
 	}
 
+	public function getCA_10()
+	{
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 10';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$ca_10 += $data['amount'];
+		}
+		return $ca_10;
+	}
+
+	public function getCA_20()
+	{
+		$sql = "SELECT DISTINCT b.amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount >= 0 AND b.dateo <= '$this->date'AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$ca_20 += $data['amount'];
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 20';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$ca_20 += $data['amount'];
+		}
+		return $ca_20;
+	}
+
+	public function getCA_0()
+	{
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 0';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$ca_0 += $data['amount'];
+		}
+		return $ca_0;
+	}	
+
 	//Selectionne le montant des achats, seulement si, les achats ne font pas partie d'une catégorie (charge)
+	/**
+	 *	This method get purchase
+	 *
+	 *	@return double $this->achat
+	 */
 	public function getAchat()
 	{
 		$sql = "SELECT DISTINCT b.amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount < 0 AND b.dateo <= '$this->date'AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity';";
@@ -104,19 +194,81 @@ class tresorerie extends CommonObject
 		while ($data = mysqli_fetch_assoc($res)) {
 			$this->achat += $data['amount'];
 		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 20';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$this->achat += round($data['amount']*(100/(20+100)), 2);
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 10';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$this->achat += round($data['amount']*(100/(10+100)), 2);
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 0';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$this->achat += round($data['amount'], 2);
+		}
 		return $this->achat;
 	}
 
+	public function getAchat_10()
+	{
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 10';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$achat_10 += $data['amount'];
+		}
+		return $achat_10;
+	}
+
+	public function getAchat_20()
+	{
+		$sql = "SELECT DISTINCT b.amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount < 0 AND b.dateo <= '$this->date'AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$achat_20 += $data['amount'];
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 20';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$achat_20 += $data['amount'];
+		}
+		return $ca_20;
+	}
+
+	public function getAchat_0()
+	{
+		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 0';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$achat_0 += $data['amount'];
+		}
+		return $achat_0;
+	}	
+
+	/**
+	 *	This method get name of category (fixed charges)
+	 *
+	 *	@return array $this->categorie
+	 */
 	public function getCategorie()
 	{
 		$query_categ = "SELECT label FROM `".MAIN_DB_PREFIX."bank_categ` ORDER BY `label` ASC;";
 		$resultat = mysqli_query($this->link, $query_categ) or die (mysqli_error($this->link));
 		while ($data= mysqli_fetch_assoc($resultat)) {
-			$this->categorie[] = $data['label'];
+			if ($data['label']!="CA Ventes 20" && $data['label'] != "CA Ventes 10" && $data['label'] != "CA Ventes 0" && $data['label']!="Achats 20" && $data['label'] != "Achats 10" && $data['label'] != "Achats 0") {
+				$this->categorie[] = $data['label'];
+			}
 		}
 		return $this->categorie;
 	}
 
+	/**
+	 *	This method get lines numbers in table bank_categ
+	 *
+	 *	@return int $nb
+	 */
 	public function getNbLignes()
 	{
 		$query_categ = "SELECT label FROM `".MAIN_DB_PREFIX."bank_categ` ORDER BY `label` ASC;";
@@ -125,6 +277,13 @@ class tresorerie extends CommonObject
 		return $nb;
 	}
 
+	/**
+	 *	This method calculate amount ex VAT of fixed charges
+	 *
+	 *	@param array $taux
+	 *	@param array $tab_ligne_bd
+	 *	@return array $amount
+	 */
 	public function Calcul_HT_Categ($taux, $tab_ligne_bd)
 	{
 		$amount = array();
@@ -147,7 +306,19 @@ class tresorerie extends CommonObject
 	}
 
 	//Permet de soit mettre à jour le tableau de bord (base de donnée) ".MAIN_DB_PREFIX."tresorerie ou soit d'inserer une nouvelle entrée dans le tbd (bd)
-	public function Upsert($Tcharge, $solde = 0, $ca = 0, $achat = 0, $Mcharge, $categ)
+	/**
+	 *	This method update or insert the new value when click on button sychronize
+	 *
+	 *	@param array $Tcharge
+	 *	@param double $solde
+	 *	@param double $ca
+	 *	@param double $achat
+	 *	@param array $Mcharge
+	 *
+	 *	@param array $categ
+	 *	@return void
+	 */
+	public function Upsert($Tcharge, $solde = 0, $ca = 0, $ca_0 = 0, $ca_10 = 0, $ca_20 = 0, $achat = 0, $achat_0 = 0, $achat_10 = 0, $achat_20 = 0, $Mcharge, $categ)
 	{
 		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
 		$replace = array("");
@@ -164,6 +335,12 @@ class tresorerie extends CommonObject
 
 		if ($mois[1] == date("m")) {
 			$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ";
+			$sql .= ($ca_0 == 0) ? "CAVentes0=NULL, " : "CAVentes0=$ca_0, ";
+			$sql .= ($ca_10 == 0) ? "CAVentes10=NULL, " : "CAVentes10=$ca_10, ";
+			$sql .= ($ca_20 == 0) ? "CAVentes20=NULL, " : "CAVentes20=$ca_20, ";
+			$sql .= ($achat_0 == 0) ? "Achats0=NULL, " : "Achats0=$achat_0, ";
+			$sql .= ($achat_10 == 0) ? "Achats10=NULL, " : "Achats10=$achat_10, ";
+			$sql .= ($achat_20 == 0) ? "Achats20=NULL, " : "Achats20=$achat_20, ";
 			foreach ($categ as $rowC) {
 				foreach ($Mcharge as $rowM => $value) {
 					$rowC = str_replace($search, $replace, $rowC);
@@ -189,10 +366,16 @@ class tresorerie extends CommonObject
 				$row = str_replace($search, $replace, $row);
 				$sql .= "$row, ";
 			}
-			$sql .= "soldeCourant, CA, achat, date, type) VALUES (";
+			$sql .= "CAVentes0, CAVentes10, CAVentes20, Achats0, Achats10, Achats20, soldeCourant, CA, achat, date, type) VALUES (";
 			foreach ($Mcharge as $row => $value) {
 				$sql .= "'$value', ";
 			}
+			$sql .= ($ca_0 == 0) ? "NULL, " : "'$ca_0', ";
+			$sql .= ($ca_10 == 0) ? "NULL, " : "'$ca_10', ";
+			$sql .= ($ca_20 == 0) ? "NULL, " : "'$ca_20', ";
+			$sql .= ($ca_0 == 0) ? "NULL, " : "'$achat_0', ";
+			$sql .= ($ca_10 == 0) ? "NULL, " : "'$achat_10', ";
+			$sql .= ($ca_20 == 0) ? "NULL, " : "'$achat_20', ";
 			$sql .= ($solde == 0) ? "NULL, " : "'$solde', ";
 			$sql .= ($ca == 0) ? "NULL, " : "'$ca', ";
 			$sql .= ($achat == 0) ? "NULL, " : "'$achat', ";
@@ -202,6 +385,11 @@ class tresorerie extends CommonObject
 		}
 	}
 
+	/**
+	 *	This method get taux of VAT
+	 *
+	 *	@return array $this->taux
+	 */
 	public function getTaux()
 	{
 		$sql = "SELECT DISTINCT bcat.label, t.taux FROM ".MAIN_DB_PREFIX."c_tva as t, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."bank_categ as bcat where ct.fk_c_tva = t.rowid AND ct.fk_bank_categ = bcat.rowid;";
@@ -215,6 +403,12 @@ class tresorerie extends CommonObject
 		return $this->taux;
 	}
 
+	/**
+	 *	This method get real treasury since the current month or the month specify on parameter
+	 *	
+	 *	@param string $date_param
+	 *	@return array $this->tresoReel
+	 */
 	public function getTresorerie_Reel($date_param = 0)
 	{
 		$date_decoupe = explode("/", $date_param);
@@ -239,6 +433,13 @@ class tresorerie extends CommonObject
 		return $this->tresoReel;
 	}
 
+	/**
+	 *	This method get real treasury ex VAT since the current month or the month specify on parameter
+	 *	
+	 *	@param array $taux
+	 *	@param string $date_param
+	 *	@return array $this->tresoReel_HT
+	 */
 	public function getTresorerie_Reel_HT($taux, $date_param = 0)
 	{
 		$tresoReel_HT = array();
@@ -287,6 +488,12 @@ class tresorerie extends CommonObject
 		return $tresoReel_HT;
 	}
 
+	/**
+	 *	This method get projected treasury since the current month or the month specify on parameter
+	 *	
+	 *	@param string $date_param
+	 *	@return array $this->tresoReel
+	 */
 	public function getTresorerie_Prev($date_param = 0)
 	{
 		$date_decoupe = explode("/", $date_param);
@@ -311,6 +518,13 @@ class tresorerie extends CommonObject
 		return $this->tresoPrev;
 	}
 
+	/**
+	 *	This method get projected treasury ex VAT since the current month or the month specify on parameter
+	 *	
+	 *	@param array $taux
+	 *	@param string $date_param
+	 *	@return array $this->tresoReel_HT
+	 */
 	public function getTresorerie_Prev_HT($taux, $date_param = 0)
 	{
 		$tresoPrev_HT = array();
@@ -354,6 +568,12 @@ class tresorerie extends CommonObject
 		return $tresoPrev_HT;
 	}
 
+	/**
+	 *	This method set projected treasury, and update table tresorerie
+	 *
+	 *	@param array $tab_prev
+	 *	@return void
+	 */
 	public function setPrevisionel($tab_prev)
 	{
 		if (strlen($tab_prev)>2) {
@@ -376,6 +596,14 @@ class tresorerie extends CommonObject
 		}
 	}
 
+	/**
+	 *	This method get real fixed charges since the current month or the month specify on parameter
+	 *
+	 *	@param array $categ
+	 *	@param array $taux
+	 *	@param string $date_param
+	 *	@return array $this->charge_reel
+	 */
 	public function getCharge($categ, $taux, $date_param = 0)
 	{
 		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
@@ -400,13 +628,14 @@ class tresorerie extends CommonObject
 			foreach ($tableau_treso_mois as $categorie_du_mois => $valeur) {
 				foreach ($taux as $categTaux => $valueTaux) {
 					if ($categTaux == $categorie_du_mois) {
-						if ($categTaux != "TVA") {
-							$tableau_treso_mois[$categorie_du_mois] = round($valeur*(100/($valueTaux+100)), 2);
+						if ($categorie_du_mois != "CA Ventes 20" && $categorie_du_mois != "CA Ventes 10" && $categorie_du_mois != "CA Ventes 0" && $categorie_du_mois != "Achats 20" && $categorie_du_mois != "Achats 10" && $categorie_du_mois != "Achats 0") {
+							if ($categTaux != "TVA") {
+								$tableau_treso_mois[$categorie_du_mois] = round($valeur*(100/($valueTaux+100)), 2);
+							}
+							else{
+								$tableau_treso_mois[$categorie_du_mois] = round($valeur, 2);
+							}
 						}
-						else{
-							$tableau_treso_mois[$categorie_du_mois] = round($valeur, 2);
-						}
-						
 					}
 				}
 			}
@@ -430,6 +659,14 @@ class tresorerie extends CommonObject
 		return $this->charge_reel;
 	}
 
+	/**
+	 *	This method get projected fixed charges since the current month or the month specify on parameter
+	 *
+	 *	@param array $categ
+	 *	@param array $taux
+	 *	@param string $date_param
+	 *	@return array $this->charge_prev
+	 */
 	public function getChargePrev($categ, $taux, $date_param = 0)
 	{
 		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
@@ -456,7 +693,9 @@ class tresorerie extends CommonObject
 			foreach ($tableau_treso_mois as $categorie_du_mois => $valeur) {
 				foreach ($taux as $categTaux => $valueTaux) {
 					if ($categTaux == $categorie_du_mois) {
-						$tableau_treso_mois[$categorie_du_mois] = round($valeur/**(100/($valueTaux+100))*/, 2);
+						if ($categorie_du_mois != "CA Ventes 10" && $categorie_du_mois != "CA Ventes 20" && $categorie_du_mois != "CA Ventes 0" && $categorie_du_mois != "Achats 20" && $categorie_du_mois != "Achats 10" && $categorie_du_mois != "Achats 0") {
+							$tableau_treso_mois[$categorie_du_mois] = round($valeur/**(100/($valueTaux+100))*/, 2);
+						}
 					}
 				}
 			}
@@ -480,6 +719,14 @@ class tresorerie extends CommonObject
 		return $this->charge_prev;
 	}
 
+	/**
+	 *	This method calculate the projected cash balance of treasury
+	 *
+	 *	@param array $categorie
+	 *	@param array $taux
+	 *	@param string $date_param
+	 *	@return void
+	 */
 	public function calcul_solde_tresorerie_prev($categorie, $taux, $date_param = 0)
 	{
 		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
@@ -526,7 +773,7 @@ class tresorerie extends CommonObject
 					}
 					foreach ($categorie as $categ) {
 						$categ = str_replace($search, $replace, $categ);
-						if ($categ == $les_categ) {
+						if ($categ == $les_categ && $categ != "CAVentes10" && $categ != "CAVentes20" && $categ != "CAVentes0" && $categ != "Achats10" && $categ != "Achats20" && $categ != "Achats0") {
 							$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value;
 						}
 					}
@@ -545,6 +792,11 @@ class tresorerie extends CommonObject
 		}			
 	}
 
+	/**
+	 *	This method calculate the future treasury, and update table tresorerie
+	 *
+	 *	@return void
+	 */
 	public function calcul_reel_futur()
 	{
 		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
@@ -565,9 +817,11 @@ class tresorerie extends CommonObject
 		}
 		foreach ($le_tab as $date_du_tab => $value) {
 			foreach ($value as $catg => $la_valeur) {
-				$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
-				mysqli_query($this->link, $sql)or die(mysqli_error($this->link));
-				mysqli_commit($this->link);
+				if ($catg != "CAVentes20" && $catg != "CAVentes10" && $catg != "CAVentes0" && $catg != "Achats20" && $catg != "Achats10" && $catg != "Achats0") {
+					$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
+					mysqli_query($this->link, $sql)or die(mysqli_error($this->link));
+					mysqli_commit($this->link);
+				}
 			}
 		}
 
@@ -580,7 +834,37 @@ class tresorerie extends CommonObject
 			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
 				$tableau_reel_futur = array();
 			}
-			$tableau_reel_futur["CA"] += $data['amount'];
+			$tableau_reel_futur["CA"] += round($data['amount']*(100/(20+100)), 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 20';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["CA"] += round($data['amount']*(100/(20+100)), 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 0';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["CA"] += round($data['amount'], 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 10';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["CA"] += round($data['amount']*(100/(10+100)), 2);
 			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
 		}
 		foreach ($le_tab as $date_du_tab => $value) {
@@ -591,10 +875,78 @@ class tresorerie extends CommonObject
 			}
 		}
 
+		$le_tab = array();
+		$sql = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 10';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["CAVentes10"] += round($data['amount'], 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		foreach ($le_tab as $date_du_tab => $value) {
+			foreach ($value as $catg => $la_valeur) {
+				$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
+				mysqli_query($this->link, $sql)or die(mysqli_error($this->link));
+				mysqli_commit($this->link);
+			}
+		}
+
+		$le_tab = array();
+		$sql = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 0';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["CAVentes0"] += round($data['amount'], 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		foreach ($le_tab as $date_du_tab => $value) {
+			foreach ($value as $catg => $la_valeur) {
+				$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
+				mysqli_query($this->link, $sql)or die(mysqli_error($this->link));
+				mysqli_commit($this->link);
+			}
+		}
+
+		$le_tab = array();
+		$sql = "SELECT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount > 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ba.entity = '$this->entity';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["CAVentes20"] += round($data['amount'], 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 20';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["CAVentes20"] += round($data['amount'], 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		foreach ($le_tab as $date_du_tab => $value) {
+			foreach ($value as $catg => $la_valeur) {
+				$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
+				mysqli_query($this->link, $sql)or die(mysqli_error($this->link));
+				mysqli_commit($this->link);
+			}
+		}
+
+
+
 		//Pour les achats
 		$le_tab = array();
 		$sql = "SELECT DISTINCT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount < 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ba.entity = '$this->entity';";
-		//$sql = "SELECT DISTINCT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount < 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND bclass.lineid!=b.rowid AND ba.entity = '$this->entity';";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$date = explode("-", $data['dateo']);
@@ -602,6 +954,103 @@ class tresorerie extends CommonObject
 				$tableau_reel_futur = array();
 			}
 			$tableau_reel_futur["achat"] += $data['amount'];
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 20';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["achat"] += round($data['amount']*(100/(20+100)), 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 0';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["achat"] += round($data['amount'], 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 10';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["achat"] += round($data['amount']*(100/(10+100)), 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		foreach ($le_tab as $date_du_tab => $value) {
+			foreach ($value as $catg => $la_valeur) {
+				$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
+				mysqli_query($this->link, $sql)or die(mysqli_error($this->link));
+				mysqli_commit($this->link);
+			}
+		}
+
+		$le_tab = array();
+		$sql = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 10';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["Achats10"] += round($data['amount'], 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		foreach ($le_tab as $date_du_tab => $value) {
+			foreach ($value as $catg => $la_valeur) {
+				$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
+				mysqli_query($this->link, $sql)or die(mysqli_error($this->link));
+				mysqli_commit($this->link);
+			}
+		}
+
+		$le_tab = array();
+		$sql = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 0';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["Achats0"] += round($data['amount'], 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		foreach ($le_tab as $date_du_tab => $value) {
+			foreach ($value as $catg => $la_valeur) {
+				$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$catg."=".$la_valeur." where date >= '".$date_du_tab."-01' AND date <= '".$date_du_tab."-28' AND type = 'reel';";
+				mysqli_query($this->link, $sql)or die(mysqli_error($this->link));
+				mysqli_commit($this->link);
+			}
+		}
+
+		$le_tab = array();
+		$sql = "SELECT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount > 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ba.entity = '$this->entity';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["Achats20"] += round($data['amount'], 2);
+			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
+		}
+		$sql = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 20';";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		while ($data = mysqli_fetch_assoc($res)) {
+			$date = explode("-", $data['dateo']);
+			if (!array_key_exists(($date[0]."-".$date[1]), $le_tab)) {
+				$tableau_reel_futur = array();
+			}
+			$tableau_reel_futur["Achats20"] += round($data['amount'], 2);
 			$le_tab[$date[0]."-".$date[1]] = $tableau_reel_futur;
 		}
 		foreach ($le_tab as $date_du_tab => $value) {
@@ -614,6 +1063,12 @@ class tresorerie extends CommonObject
 
 	}
 
+	/**
+	 *	This method caluclate the future cash balance and update table tresorerie
+	 *
+	 *	@param array $categorie
+	 *	@return void
+	 */
 	public function calcul_solde_tresorerie_reel_futur($categorie)
 	{
 		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
@@ -665,7 +1120,7 @@ class tresorerie extends CommonObject
 					}
 					foreach ($categorie as $categ) {
 						$categ = str_replace($search, $replace, $categ);
-						if ($categ == $les_categ) {
+						if ($categ == $les_categ && $categ != "CAVentes10" && $categ != "CAVentes20" && $categ != "CAVentes0" && $categ != "Achats10" && $categ != "Achats20" && $categ != "Achats0") {
 							$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value;
 						}
 					}
@@ -685,6 +1140,12 @@ class tresorerie extends CommonObject
 		}
 	}
 
+	/**
+	 *	This method calculate the percentage by turnover of year N and year N-1 by date
+	 *
+	 *	@param string $date_param
+	 *	@return array $pourcentage
+	 */
 	public function calcul_pourcentage_ca_par_ca_n_moins_1($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -720,7 +1181,13 @@ class tresorerie extends CommonObject
 	}
 
 
-	//Calcul du taux de marge 
+	//Calcul du taux de marge
+	/**
+	 *	This method calculate margin rate by date
+	 *
+	 *	@param string $date_param
+	 *	@return array $taux_de_marge
+	 */
 	public function calcul_taux_de_marge($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -764,6 +1231,12 @@ class tresorerie extends CommonObject
 	}
 
 	//Calcul CA cumulé
+	/**
+	 *	This method calculate total turnover on twelve month
+	 *
+	 *	@param string $date_param
+	 *	@return array $cumul
+	 */
 	public function calcul_ca_cumule($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -854,6 +1327,12 @@ class tresorerie extends CommonObject
 		return $cumul;
 	}
 
+	/**
+	*	This method update the fixed charges, since the started activity
+	*
+	*	@param array $categ
+	*	@return void
+	*/
 	public function up_tresorerie_charge_fixe($categ)
 	{
 		$tableau_montant_categorie = array();
@@ -863,13 +1342,17 @@ class tresorerie extends CommonObject
 		$sql = "SELECT DISTINCT b.rowid, bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."facture as f, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND ct.fk_c_tva = t.rowid AND ct.fk_bank_categ = bcat.rowid AND b.amount<=0 ORDER BY b.dateo ASC;";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while($data = mysqli_fetch_array($res, MYSQLI_ASSOC)){
-			$tab1[] = $data['label'];
-			$tableau_montant_categorie[] = $data;
+			//if ($data['label'] != "CA Ventes 10" && $data['label'] != "CA Ventes 20") {
+				$tab1[] = $data['label'];
+				$tableau_montant_categorie[] = $data;
+			//}
 		}
 		foreach ($categ as $value) {
 			$value = str_replace($search, $replace, $value);
-			$query = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$value."=NULL where type ='reel';";
-			mysqli_query($this->link ,$query);
+			//if ($value != "CAVentes20" && $value != "CAVentes10") {
+				$query = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET ".$value."=NULL where type ='reel';";
+				mysqli_query($this->link ,$query);
+			//}
 		}
 
 		$sql2 = "SELECT DISTINCT date FROM ".MAIN_DB_PREFIX."tresorerie order by date asc;";
@@ -902,6 +1385,11 @@ class tresorerie extends CommonObject
 		mysqli_commit($this->link);
 	}
 
+	/**
+	 *	This method get outstanding supplier
+	 *
+	 *	@return array $tableau_encours_fourn
+	 */
 	public function getEncoursFournisseur()
 	{
 		$sql3 = "SELECT f.total_ttc, f.date_lim_reglement as dlr, s.nom FROM ".MAIN_DB_PREFIX."facture_fourn as f LEFT JOIN ".MAIN_DB_PREFIX."societe as s ON f.fk_soc = s.rowid WHERE f.entity = 1 AND f.paye = 0 AND f.fk_statut = 1 ORDER BY dlr ASC";
@@ -910,10 +1398,15 @@ class tresorerie extends CommonObject
 		while($data = mysqli_fetch_assoc($res)){
 			$tableau_encours_fourn[$data['dlr']] = $data['total_ttc'];
 		}
-		return $tableau_encours_fourn;
 		mysqli_commit($this->link);
+		return $tableau_encours_fourn;
 	}
-
+	/**
+	 *	This method get VAT collected by date
+	 *
+	 *	@param string $date_param
+	 *	@return array $tva_collecte
+	 */
 	public function getTVACollecte($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -925,25 +1418,39 @@ class tresorerie extends CommonObject
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
 
+		$sql1 = "SELECT CAVentes10, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC;";
+		$res = mysqli_query($this->link, $sql1) or die (mysqli_error($this->link));
+		$tab_ca_10 = array();
+		while ($data = mysqli_fetch_assoc($res)) {
+			$data['date'] = explode("-", $data['date']);
+			$tab_ca_10[$data['date'][0]."-".$data['date'][1]] = $data['CAVentes10'];
+		}
+
 		$sql = "SELECT CA, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		$tableau_ca = array();
 		while($data = mysqli_fetch_assoc($res)){
 			$data['date'] = explode("-", $data['date']);
-			$tableau_ca[$data['date'][0]."-".$data['date'][1]] = $data['CA'];
+			$tableau_ca[$data['date'][0]."-".$data['date'][1]] = ($data['CA'] - $tab_ca_10[$data['date'][0]."-".$data['date'][1]]);
 		}
 
 		$tva_collecte = array();
 		foreach ($tableau_ca as $date_ca => $ca) {
 			$_les_dates_ca = explode("-", $date_ca);
 			if ($date_ca >= $date_temp_demande) {
-				$tva_collecte[$i] = $ca * 0.2;
+				$tva_collecte[$i] = ($ca * 0.2)+($tab_ca_10[$date_ca] * 0.1);
 				$i++;
 			}
 		}
 		return $tva_collecte;
 	}
 
+	/**
+	 *	This method get VAT deductible by date
+	 *
+	 *	@param string $date_param
+	 *	@return array $tva_due
+	 */
 	public function getTVADeductible($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -953,6 +1460,14 @@ class tresorerie extends CommonObject
 			$date_decoupe = explode("/", $date_param);
 			$date = "$date_decoupe[2]-$date_decoupe[1]-$date_decoupe[0]";
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
+		}
+
+		$sql1 = "SELECT Achats10, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC;";
+		$res = mysqli_query($this->link, $sql1) or die (mysqli_error($this->link));
+		$tab_ca_10 = array();
+		while ($data = mysqli_fetch_assoc($res)) {
+			$data['date'] = explode("-", $data['date']);
+			$tab_achat_10[$data['date'][0]."-".$data['date'][1]] = $data['Achats10'];
 		}
 
 		$sql = "SELECT achat, date FROM ".MAIN_DB_PREFIX."tresorerie where type='reel' ORDER BY date ASC";
@@ -967,13 +1482,19 @@ class tresorerie extends CommonObject
 		foreach ($tableau_achat as $date_achat => $achat) {
 			$_les_dates_achat = explode("-", $date_achat);
 			if ($date_achat >= $date_temp_demande) {
-				$tva_due[$i] = $achat * 0.2;
+				$tva_due[$i] = ($achat * 0.2)+($tab_achat_10[$date_achat] * 0.1);;
 				$i++;
 			}
 		}
 		return $tva_due;
 	}
 
+	/**
+	 *	This method get VAT paid by date
+	 *
+	 *	@param string $date_param
+	 *	@return array $tva_payer
+	 */
 	public function getTVAPayer($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -1004,6 +1525,14 @@ class tresorerie extends CommonObject
 		return $tva_payer;
 	}
 
+	/**
+	 *	This method calculate cash balance of VAT
+	 *	
+	 *	@param array $tva_due
+	 *	@param array $tva_collecte
+	 *	@param array $tva_payer
+	 *	@return array $tab_solde_tva
+	 */
 	public function calculSoldeTVA($tva_due, $tva_collecte, $tva_payer)
 	{
 		$tab_solde_tva = array();
@@ -1013,6 +1542,12 @@ class tresorerie extends CommonObject
 		return $tab_solde_tva;
 	}
 
+	/**
+	 *	This method calculate total of turnover on twelve month
+	 *
+	 *	@param string $date_param
+	 *	@return double $cumul_CA
+	 */
 	public function cumul_CA($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -1044,6 +1579,12 @@ class tresorerie extends CommonObject
 		return $cumul_CA;
 	}
 
+	/**
+	 *	This method calculate projected total of turnover on twelve month
+	 *
+	 *	@param string $date_param
+	 *	@return double $cumul_CA
+	 */
 	public function cumul_CA_prev($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -1075,6 +1616,13 @@ class tresorerie extends CommonObject
 		return $cumul_CA;
 	}
 
+	/**
+	 *	This method calculate percentage of total real turnover and projected
+	 *
+	 *	@param double $cumul_ca
+	 *	@param double $cumul_ca_prev
+	 *	@return double $pourcentage 
+	 */
 	public function pourcentage_cumul_ca($cumul_ca, $cumul_ca_prev)
 	{
 		if ($cumul_ca_prev == 0) {
@@ -1086,6 +1634,12 @@ class tresorerie extends CommonObject
 		return $pourcentage;
 	}
 
+	/**
+	 *	This method calculate total purchase since twelve month
+	 *
+	 *	@param string $date_param
+	 *	@return double $cumul_achat
+	 */
 	public function cumul_achat($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -1117,6 +1671,12 @@ class tresorerie extends CommonObject
 		return $cumul_achat;
 	}
 
+	/**
+	 *	This method calculate projected total purchase since twelve month
+	 *
+	 *	@param string $date_param
+	 *	@return double $cumul_achat
+	 */
 	public function cumul_achat_prev($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -1148,6 +1708,13 @@ class tresorerie extends CommonObject
 		return $cumul_achat;
 	}
 
+	/**
+	 *	This method calculate percentage of total real purchase and projected
+	 *
+	 *	@param double $cumul_achat
+	 *	@param double $cumul_achat_prev
+	 *	@return double $pourcentage 
+	 */
 	public function pourcentage_cumul_achat($cumul_achat, $cumul_achat_prev)
 	{
 		if ($cumul_achat_prev == 0) {
@@ -1159,6 +1726,13 @@ class tresorerie extends CommonObject
 		return $pourcentage;
 	}
 
+	/**
+	 *	This method calculate real total fixed charges since twelve month by date
+	 *
+	 *	@param array $taux
+	 *	@param string $date_param
+	 *	@return double $tab1
+	 */
 	public function cumul_Charge($taux, $date_param = 0)
 	{
 		$tresoReel_HT = array();
@@ -1195,6 +1769,13 @@ class tresorerie extends CommonObject
 		return $tab1;
 	}
 
+	/**
+	 *	This method calculate projected total fixed charges since twelve month by date
+	 *
+	 *	@param array $taux
+	 *	@param string $date_param
+	 *	@return double $tab1
+	 */
 	public function cumul_Charge_prev($taux, $date_param = 0)
 	{
 		$tresoReel_HT = array();
@@ -1226,6 +1807,110 @@ class tresorerie extends CommonObject
 		return $tab1;
 	}
 
+	/**
+	 *	This method calculate real total fixed charges since twelve month by date with other key in return array
+	 *
+	 *	@param array $taux
+	 *	@param string $date_param
+	 *	@return double $tab1
+	 */
+	public function cumul_Charge_2($taux, $date_param = 0)
+	{
+		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
+		$replace = array("");
+		$tresoReel_HT = array();
+		$date_decoupe = explode("/", $date_param);
+		$date = "$date_decoupe[2]-$date_decoupe[1]-$date_decoupe[0]";
+		$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]-01";
+		$date_temp_a = explode("-", $this->date);
+		$date_temp_courant = "$date_temp_a[0]-$date_temp_a[1]-01";
+		$query = "SELECT bcat.rowid, bcat.label FROM ".MAIN_DB_PREFIX."bank_categ as bcat where bcat.entity = '$this->entity'";
+		$result = mysqli_query($this->link, $query) or die (mysqli_error($this->link));
+		$row = array();
+		while($data = mysqli_fetch_assoc($result)){
+			$value = str_replace($search, $replace, $data['label']);
+			$row[$value] = $data['rowid']; 
+		}
+		$sql = ($date == 0) ?  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='reel' ORDER BY t.date ASC;":  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$date' AND t.type='reel' ORDER BY t.date ASC";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		$nb = mysqli_num_fields($res);
+		$tab1 = array();
+		$j = array();
+		while ($data = mysqli_fetch_row($res)) {
+			for ($i=0; $i < $nb; $i++) {
+				$finfo = mysqli_fetch_field_direct($res, $i);
+				foreach ($taux as $categTaux => $valueTaux) {
+					if($categTaux == $finfo->name){
+						if ($j[$row[$categTaux]]<12) {
+							if ($data[$i] != NULL) {
+								if ($finfo->name == "TVA") {
+									$tab1[$row[$categTaux]] += round(-$data[$i], 2);
+								}
+								else{
+									$tab1[$row[$categTaux]] += round(-$data[$i]*(100/($valueTaux+100)), 2);
+								}
+							}
+						}
+						$j[$row[$categTaux]]++;
+					}
+				}
+			}
+		}
+		return $tab1;
+	}
+
+	/**
+	 *	This method calculate projected total fixed charges since twelve month by date with other key in return array
+	 *
+	 *	@param array $taux
+	 *	@param string $date_param
+	 *	@return double $tab1
+	 */
+	public function cumul_Charge_prev_2($taux, $date_param = 0)
+	{
+		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
+		$replace = array("");
+		$tresoReel_HT = array();
+		$date_decoupe = explode("/", $date_param);
+		$date = "$date_decoupe[2]-$date_decoupe[1]-$date_decoupe[0]";
+		$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]-01";
+		$date_temp_a = explode("-", $this->date);
+		$date_temp_courant = "$date_temp_a[0]-$date_temp_a[1]-01";
+		$query = "SELECT bcat.rowid, bcat.label FROM ".MAIN_DB_PREFIX."bank_categ as bcat where bcat.entity = '$this->entity'";
+		$result = mysqli_query($this->link, $query) or die (mysqli_error($this->link));
+		$row = array();
+		while($data = mysqli_fetch_assoc($result)){
+			$value = str_replace($search, $replace, $data['label']);
+			$row[$value] = $data['rowid']; 
+		}
+		$sql = ($date == 0) ?  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$this->dateD-01' AND t.type='prev' ORDER BY t.date ASC;":  "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie as t WHERE t.date>='$date' AND t.type='prev' ORDER BY t.date ASC";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+		$nb = mysqli_num_fields($res);
+		$tab1 = array();
+		$j = array();
+		while ($data = mysqli_fetch_row($res)) {
+			for ($i=0; $i < $nb; $i++) {
+				$finfo = mysqli_fetch_field_direct($res, $i);
+				foreach ($taux as $categTaux => $valueTaux) {
+						if($categTaux == $finfo->name){
+							if ($j[$row[$categTaux]]<12) {
+								$tab1[$row[$categTaux]] += round(-$data[$i], 2);
+							}
+							$j[$row[$categTaux]]++;
+						}
+				}
+			}
+		}
+		return $tab1;
+	}
+
+	/**
+	 *	This method calculate percentage of total real fixed charges and projected
+	 *
+	 *	@param double $cumul_charge
+	 *	@param double $cumul_charge_prev
+	 *	@return double $pourcentage 
+	 */
 	public function pourcentage_cumul_charge($cumul_Charge, $cumul_Charge_prev)
 	{
 		$pourcentage = array();
@@ -1240,6 +1925,12 @@ class tresorerie extends CommonObject
 		return $pourcentage;
 	}
 
+	/**
+	 *	This method calculate real total fixed charges 
+	 *	
+	 *	@param array $total_charge
+	 *	@return double $cumul_total_charge
+	 */
 	public function cumul_total_charge($total_charge)
 	{
 		$cumul_total_charge = 0;
@@ -1251,6 +1942,12 @@ class tresorerie extends CommonObject
 		return $cumul_total_charge;
 	}
 
+	/**
+	 *	This method calculate projected total fixed charges 
+	 *	
+	 *	@param array $total_charge_prev
+	 *	@return double $cumul_total_charge_prev
+	 */
 	public function cumul_total_charge_prev($total_charge_prev)
 	{
 		$cumul_total_charge_prev = 0;
@@ -1262,6 +1959,13 @@ class tresorerie extends CommonObject
 		return $cumul_total_charge_prev;
 	}
 
+	/**
+	 *	This method calculate percentage of total real fixed charges and projected
+	 *
+	 *	@param double $total_charge
+	 *	@param double $total_charge_prev
+	 *	@return double $pourcentage 
+	 */
 	public function pourcentage_cumul_total_charge($total_charge, $total_charge_prev)
 	{
 		if ($total_charge_prev == 0) {
@@ -1273,6 +1977,12 @@ class tresorerie extends CommonObject
 		return $pourcentage;
 	}
 
+	/**
+	 *	This method calculate real total cash balance since twelve month by date 
+	 *	
+	 *	@param array $date_param
+	 *	@return double $cumul_solde_tresorerie
+	 */
 	public function cumul_solde_tresorerie($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -1303,6 +2013,12 @@ class tresorerie extends CommonObject
 		return $cumul_solde_tresorerie;
 	}
 
+	/**
+	 *	This method calculate projected total cash balance since twelve month by date 
+	 *	
+	 *	@param array $date_param
+	 *	@return double $cumul_solde_tresorerie
+	 */
 	public function cumul_solde_tresorerie_prev($date_param = 0)
 	{
 		if ($date_param == 0) {
@@ -1333,6 +2049,13 @@ class tresorerie extends CommonObject
 		return $cumul_solde_tresorerie;
 	}
 
+	/**
+	 *	This method calculate percentage of total real cash balance and projected
+	 *
+	 *	@param double $cumul_solde_tresorerie
+	 *	@param double $cumul_solde_tresorerie_prev
+	 *	@return double $pourcentage 
+	 */
 	public function pourcentage_cumul_solde_tresorerie($cumul_solde_tresorerie, $cumul_solde_tresorerie_prev)
 	{
 		if ($cumul_solde_tresorerie_prev == 0) {
@@ -1344,6 +2067,11 @@ class tresorerie extends CommonObject
 		return $pourcentage;
 	}
 
+	/**
+	 *	This method get the name of company
+	 *
+	 *	@return string $nom
+	 */
 	public function getNomEntreprise()
 	{
 		$sql = "SELECT label FROM ".MAIN_DB_PREFIX."entity where rowid='$this->entity'";
@@ -1352,6 +2080,11 @@ class tresorerie extends CommonObject
 		return $nom;
 	}
 
+	/**
+	 *	This method get turnover of year N-1
+	 *
+	 *	@return double $ca_N_moins_1
+	 */
 	public function getCA_N_moins_1()
 	{
 		$date_N_1 = date("Y")-1;
@@ -1366,6 +2099,11 @@ class tresorerie extends CommonObject
 		return $ca_N_moins_1;
 	}
 
+	/**
+	 *	This method get turnover of year N
+	 *
+	 *	@return double $ca_N
+	 */
 	public function getCA_N()
 	{
 		$date_N_1 = date("Y")+1;
@@ -1378,6 +2116,60 @@ class tresorerie extends CommonObject
 			$ca_N[$la_date[1]] = $data['CA']*(100/(20+100));
 		}
 		return $ca_N;
+	}
+
+	/**
+	 *	This method make it possible to put back and add new year when the current year is past
+	 *
+	 *	@return void
+	 */
+	public function remise_a_zero()
+	{
+		$sql_verif = "SELECT date FROM llx_tresorerie ORDER BY date ASC LIMIT 1;";
+		$res = mysqli_query($this->link, $sql_verif) or die (mysqli_error($this->link));
+		$date_verif = mysqli_fetch_row($res)[0];
+		if ($date_verif == (date("Y")-2)) {
+			$sql = "DELETE FROM llx_tresorerie WHERE date < '".(date("Y")-1)."-01-01';";
+			mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+			for ($i=0; $i < 12; $i++) { 
+				$sql_reel = "INSERT into llx_tresorerie (date, type) VALUES ('".(date("Y")+1)."-$i-28', 'reel');";
+				$sql_prev = "INSERT into llx_tresorerie (date, type) VALUES ('".(date("Y")+1)."-$i-28', 'prev');";
+				mysqli_query($this->link, $sql_reel) or die (mysqli_error($this->link));
+				mysqli_query($this->link, $sql_prev) or die (mysqli_error($this->link));
+			}
+			?>
+                <div class="jnotify-container">
+                    <div class="jnotify-notification jnotify-notification-success">
+                        <div class="jnotify-background"></div>
+                            <a onclick="fonction()" class="jnotify-close">
+                               ×
+                            </a>
+                        <div class="jnotify-message">
+                            <div>
+                                Opération éffectué avec succès.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php 
+		}
+		else{
+			?>
+                <div class="jnotify-container">
+                    <div class="jnotify-notification jnotify-notification-error">
+                        <div class="jnotify-background"></div>
+                            <a onclick="fonction()" class="jnotify-close">
+                               ×
+                            </a>
+                        <div class="jnotify-message">
+                            <div>
+                                L'opération ne peut être effectuée, puisque vous êtes toujours dans l'année comprise entre <?php echo (date("Y")-1)." et ".(date("Y")+1); ?> 
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php 
+		}
 	}
 
 	//3 methode en desous pas utile pour l'instant, la methode getSolde() fait cela !!

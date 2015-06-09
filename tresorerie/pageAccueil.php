@@ -32,6 +32,7 @@ if (! $res) die("Include of main fails");
 require_once 'class/connect.php';
 include_once DOL_DOCUMENT_ROOT .'/tresorerie/class/initialisation.php';
 include_once DOL_DOCUMENT_ROOT .'/tresorerie/class/modificationTable.php';
+include_once DOL_DOCUMENT_ROOT .'/tresorerie/class/tresorerie.php';
 dol_include_once('/module/class/skeleton_class.class.php');
 
 // Load traductions files requiredby by page
@@ -91,6 +92,11 @@ $connect = new connect($dolibarr_main_db_host, $dolibarr_main_db_name, $dolibarr
 $link = $connect->link();
 ?>
 <link rel="stylesheet" type="text/css" href="style/style.css">
+<script type="text/javascript">
+        function fonction(){
+            $(".jnotify-container").css("display", "none");
+        }
+    </script>
       <table class="notopnoleftnoright" border="0" style="margin-bottom: 2px;">
         <tbody>
             <tr>
@@ -121,6 +127,15 @@ $link = $connect->link();
     </div>
     </center>
 
+    <center>
+    <div class="form">
+        <form action="#" method="get">
+            <p class="mycss">Voulez vous passer a l'année suivante ?</p>
+            <input type="submit" class="btnSupprimer" name="zero" value="Remise a zéro"></input>
+        </form>
+    </div>
+    </center>
+
 
 <?php
 if (isset($_GET['init'])) {
@@ -132,7 +147,8 @@ if (isset($_GET['init'])) {
     $tab_achat = $init->up_tresorerie_Achat();
     $categ = $init->getCategorie();
     $tab_charge = $init->getCharge_test($categ);
-    $init->calcul_solde_tresorerie($tab_ca, $tab_achat, $tab_charge);
+    $tab_valeur_sup = $init->recuperer_valeur_sup_categ();
+    $init->calcul_solde_tresorerie($tab_ca, $tab_achat, $tab_charge, $tab_valeur_sup);
 }
 
 $modif = new modificationTable($link);
@@ -148,6 +164,11 @@ for ($i=0; $i <= $nb_lignes; $i++) {
 if (isset($_GET['maj'])) {
   $modif->ajoutCategorie($categorie2);
   $modif->supprimerCategorie($categorie2);
+}
+
+if (isset($_GET['zero'])) {
+    $tresorerie = new tresorerie($link);
+    $tresorerie->remise_a_zero();
 }
 
 // Example 1 : Adding jquery code

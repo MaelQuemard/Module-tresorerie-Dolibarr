@@ -14,11 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+/**
+ *	This file is necessary to connect at database
+ */
 
 /**
- *	\file       htdocs/tresorerie/class/connect.php
- *	\ingroup    tresorerie
- *	\brief      File of class to connect into database
+ * This class is used to connect at the database
+ * 
+ *	
+ *	@version 1.0
+ *	@author Maël Quémard
  */
 class connect
 {
@@ -33,6 +38,11 @@ class connect
 		}
 	}
 
+	/**
+	 *	This method return a link to the connect database
+	 *
+	 *	@return Object $link
+	 */
 	public function link()
 	{
 		return $this->link;

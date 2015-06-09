@@ -88,8 +88,7 @@ $link = $connect->link();
 $moisM = date("m");
 $annee = date("Y");
 
-$tresorerie = new tresorerie($db, $link);
-
+$tresorerie = new tresorerie($link);
 $nb_lignes = $tresorerie->getNbLignes();
 $categorie = $tresorerie->getCategorie();
 $search = array(',', '-', '(', ')', ' ', '/', "'", '+');
@@ -121,8 +120,14 @@ if (isset($_GET['synchro'])) {
 	$tCharge = $tresorerie->getTotalCharge();
 	$mCateg = $tresorerie->getMontantCategorie();
 	$ca = $tresorerie->getCA();
+	$ca_0 = $tresorerie->getCA_0();
+	$ca_10 = $tresorerie->getCA_10();
+	$ca_20 = $tresorerie->getCA_20();
 	$achat = $tresorerie->getAchat();
-	$tresorerie->Upsert($tCharge, $solde, $ca, $achat, $mCateg, $categorie);
+	$achat_0 = $tresorerie->getAchat_0();
+	$achat_10 = $tresorerie->getAchat_10();
+	$achat_20 = $tresorerie->getAchat_20();
+	$tresorerie->Upsert($tCharge, $solde, $ca, $ca_0, $ca_10, $ca_20, $achat, $achat_0, $achat_10, $achat_20, $mCateg, $categorie);
 }
 
 
@@ -299,7 +304,7 @@ $moisPrecedent = array();
                                 for ($i=0; $i < 13 ; $i++) { 
                                     ?>
                                 <td>
-                                    Prévisonnel
+                                    Prévisonnel (HT)
                                 </td>
                                 <td style="padding:0px 20px 0px 20px">
                                 	<b>Réel</b>
@@ -378,6 +383,189 @@ $moisPrecedent = array();
                         	<td></td>
                         </tr>
                         <tr>
+                        	<td class="right">CA - Ventes 0%</td>
+                            <?php for ($j=0; $j < 25; $j++) {
+	                            	for($i=0; $i< 25; $i++){
+		                        		foreach($tresoPrev as $truc => $key){
+		                    				foreach($key as $row =>$value){
+		                    					$val = $truc*2;
+		                                    	$val2 = $j;
+												if($row == "CAVentes0" && $val==$val2 && $truc<12){
+	                    							if ($date_test[1] >= 12) {
+														$date_test[1]=1;
+														$date_test[2]++;
+													}
+													else{
+														$date_test[1]++;
+													}
+	                    							echo "<td class=\"prev\" data-id=\"$row;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"$row;$j\"></input>".price($value)/*round($value, 2)*/."</td>";
+	                    							$j++;
+	                    						}
+		                    				}
+		                    			}
+		                    			foreach($tresoReel as $truc => $key){
+		                    				foreach($key as $row =>$value){
+		                    					$val = ($truc*2)-1;
+		                                        $val2 = $j-2;
+		                    					if($row == "CAVentes0" && $val==$val2 &&$truc<12){
+		                    						echo "<td>".price(round($value, 2))."</td>";
+		                    						$j++;
+		                    					}
+		                    				}
+		                    			}
+		                    		}
+	                    			if($j%2==0){
+	                    				if ($date_test[1] >= 12) {
+											$date_test[1]=1;
+											$date_test[2]++;
+										}
+										else{
+											$date_test[1]++;
+			                            }
+			                            if ($j<23) {
+			                            	echo "<td class=\"prev\" data-id=\"CAVentes10;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CA;$j\"></input></td>";
+			                            }								
+	                       			}
+	                       			else{
+	                       				echo "<td></td>";
+	                       			}	                       			
+	                    		}
+	                    		if(isset($_GET['re'])){
+	                            	$date_test = explode("/", $_GET['re']);
+	                            	$date_test[1]--;
+	                            }
+	                            else{
+	                            	$date_test = explode("-", date("d-m-Y"));
+	                            	$date_test[1]--;
+	                            }
+                        	?>
+                        	<td></td>
+                        	<td></td>
+                        	<td></td>
+                        </tr>
+                        <tr>
+                        	<td class="right">CA - Ventes 10% (HT)</td>
+                            <?php for ($j=0; $j < 25; $j++) {
+	                            	for($i=0; $i< 25; $i++){
+		                        		foreach($tresoPrev as $truc => $key){
+		                    				foreach($key as $row =>$value){
+		                    					$val = $truc*2;
+		                                    	$val2 = $j;
+												if($row == "CAVentes10" && $val==$val2 && $truc<12){
+	                    							if ($date_test[1] >= 12) {
+														$date_test[1]=1;
+														$date_test[2]++;
+													}
+													else{
+														$date_test[1]++;
+													}
+	                    							echo "<td class=\"prev\" data-id=\"$row;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"$row;$j\"></input>".price($value)/*round($value, 2)*/."</td>";
+	                    							$j++;
+	                    						}
+		                    				}
+		                    			}
+		                    			foreach($tresoReel as $truc => $key){
+		                    				foreach($key as $row =>$value){
+		                    					$val = ($truc*2)-1;
+		                                        $val2 = $j-2;
+		                    					if($row == "CAVentes10" && $val==$val2 &&$truc<12){
+		                    						echo "<td>".price(round($value, 2))."</td>";
+		                    						$j++;
+		                    					}
+		                    				}
+		                    			}
+		                    		}
+	                    			if($j%2==0){
+	                    				if ($date_test[1] >= 12) {
+											$date_test[1]=1;
+											$date_test[2]++;
+										}
+										else{
+											$date_test[1]++;
+			                            }
+			                            if ($j<23) {
+			                            	echo "<td class=\"prev\" data-id=\"CAVentes10;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CA;$j\"></input></td>";
+			                            }								
+	                       			}
+	                       			else{
+	                       				echo "<td></td>";
+	                       			}	                       			
+	                    		}
+	                    		if(isset($_GET['re'])){
+	                            	$date_test = explode("/", $_GET['re']);
+	                            	$date_test[1]--;
+	                            }
+	                            else{
+	                            	$date_test = explode("-", date("d-m-Y"));
+	                            	$date_test[1]--;
+	                            }
+                        	?>
+                        	<td></td>
+                        	<td></td>
+                        	<td></td>
+                        </tr>
+                        <tr>
+                        	<td class="right">CA - Ventes 20% (HT)</td>
+                            <?php for ($j=0; $j < 25; $j++) {
+	                            	for($i=0; $i< 25; $i++){
+		                        		foreach($tresoPrev as $truc => $key){
+		                    				foreach($key as $row =>$value){
+		                    					$val = $truc*2;
+		                                    	$val2 = $j;
+												if($row == "CAVentes20" && $val==$val2 && $truc<12){
+	                    							if ($date_test[1] >= 12) {
+														$date_test[1]=1;
+														$date_test[2]++;
+													}
+													else{
+														$date_test[1]++;
+													}
+	                    							echo "<td class=\"prev\" data-id=\"$row;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"$row;$j\"></input>".price($value)/*round($value, 2)*/."</td>";
+	                    							$j++;
+	                    						}
+		                    				}
+		                    			}
+		                    			foreach($tresoReel as $truc => $key){
+		                    				foreach($key as $row =>$value){
+		                    					$val = ($truc*2)-1;
+		                                        $val2 =  $j-2;
+		                    					if($row == "CAVentes20" && $val==$val2 &&$truc<12){
+		                    						echo "<td>".price(round($value, 2))."</td>";
+		                    						$j++;
+		                    					}
+		                    				}
+		                    			}
+		                    		}
+	                    			if($j%2==0){
+	                    				if ($date_test[1] >= 12) {
+											$date_test[1]=1;
+											$date_test[2]++;
+										}
+										else{
+											$date_test[1]++;
+			                            }
+			                            if ($j<23) {
+			                            	echo "<td class=\"prev\" data-id=\"CAVentes20;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CA;$j\"></input></td>";
+			                            }									
+	                       			}
+	                       			else{
+	                       				echo "<td></td>";
+	                       			}	                       			
+	                    		}
+	                    		if(isset($_GET['re'])){
+	                            	$date_test = explode("/", $_GET['re']);
+	                            	$date_test[1]--;
+	                            }
+	                            else{
+	                            	$date_test = explode("-", date("d-m-Y"));
+	                            	$date_test[1]--;
+	                            }
+                        	?>
+                        	<td></td>
+                        	<td></td>
+                        	<td></td>
+                        </tr>
+                        <tr>
                             <td class="right"><b>Chiffre d'affaires (HT)</b></td>
                             <?php for ($j=0; $j < 25; $j++) {
 	                            	for($i=0; $i< 25; $i++){
@@ -403,7 +591,7 @@ $moisPrecedent = array();
 		                    					$val = ($truc*2)-1;
 		                                        $val2 = $j-2;
 		                    					if($row == "CA" && $val==$val2 &&$truc<12){
-		                    						echo "<td><b>".price(round($value*(100/(20+100)), 2))."</b></td>";
+		                    						echo "<td><b>".price(round($value, 2))."</b></td>";
 		                    						$j++;
 		                    					}
 		                    				}
@@ -422,7 +610,7 @@ $moisPrecedent = array();
 			                            }
 			                            else{
 			                            	echo "<td>".price($cumul_CA_prev)."</td>";
-	                            			echo "<td><b>".price(round($cumul_CA*(100/(20+100))),2)."</b></td>";
+	                            			echo "<td><b>".price(round($cumul_CA,2))."</b></td>";
 			                            }									
 	                       			}
 	                       			else{
@@ -452,6 +640,189 @@ $moisPrecedent = array();
                         <tr class="liste_titre" style=" opacity: 0.7;">
                             <td><b>Achats (HT)</b></td>
                              <?php for ($i=0; $i < 27; $i++) {?><td></td> <?php } ?>
+                        </tr>
+                        <tr>
+                        	<td class="right">Achats 0%</td>
+                            <?php for ($j=0; $j < 25; $j++) {
+	                            	for($i=0; $i< 25; $i++){
+		                        		foreach($tresoPrev as $truc => $key){
+		                    				foreach($key as $row =>$value){
+		                    					$val = $truc*2;
+		                                    	$val2 = $j;
+												if($row == "Achats0" && $val==$val2 && $truc<12){
+	                    							if ($date_test[1] >= 12) {
+														$date_test[1]=1;
+														$date_test[2]++;
+													}
+													else{
+														$date_test[1]++;
+													}
+	                    							echo "<td class=\"prev\" data-id=\"$row;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"$row;$j\"></input>".price($value)/*round($value, 2)*/."</td>";
+	                    							$j++;
+	                    						}
+		                    				}
+		                    			}
+		                    			foreach($tresoReel as $truc => $key){
+		                    				foreach($key as $row =>$value){
+		                    					$val = ($truc*2)-1;
+		                                        $val2 =  $j-2;
+		                    					if($row == "Achats0" && $val==$val2 &&$truc<12){
+		                    						echo "<td>".price(round($value, 2))."</td>";
+		                    						$j++;
+		                    					}
+		                    				}
+		                    			}
+		                    		}
+	                    			if($j%2==0){
+	                    				if ($date_test[1] >= 12) {
+											$date_test[1]=1;
+											$date_test[2]++;
+										}
+										else{
+											$date_test[1]++;
+			                            }
+			                            if ($j<23) {
+			                            	echo "<td class=\"prev\" data-id=\"Achats0;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CA;$j\"></input></td>";
+			                            }									
+	                       			}
+	                       			else{
+	                       				echo "<td></td>";
+	                       			}	                       			
+	                    		}
+	                    		if(isset($_GET['re'])){
+	                            	$date_test = explode("/", $_GET['re']);
+	                            	$date_test[1]--;
+	                            }
+	                            else{
+	                            	$date_test = explode("-", date("d-m-Y"));
+	                            	$date_test[1]--;
+	                            }
+                        	?>
+                        	<td></td>
+                        	<td></td>
+                        	<td></td>
+                        </tr>
+                        <tr>
+                        	<td class="right">Achats 10% (HT)</td>
+                            <?php for ($j=0; $j < 25; $j++) {
+	                            	for($i=0; $i< 25; $i++){
+		                        		foreach($tresoPrev as $truc => $key){
+		                    				foreach($key as $row =>$value){
+		                    					$val = $truc*2;
+		                                    	$val2 = $j;
+												if($row == "Achats10" && $val==$val2 && $truc<12){
+	                    							if ($date_test[1] >= 12) {
+														$date_test[1]=1;
+														$date_test[2]++;
+													}
+													else{
+														$date_test[1]++;
+													}
+	                    							echo "<td class=\"prev\" data-id=\"$row;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"$row;$j\"></input>".price($value)/*round($value, 2)*/."</td>";
+	                    							$j++;
+	                    						}
+		                    				}
+		                    			}
+		                    			foreach($tresoReel as $truc => $key){
+		                    				foreach($key as $row =>$value){
+		                    					$val = ($truc*2)-1;
+		                                        $val2 =  $j-2;
+		                    					if($row == "Achats10" && $val==$val2 &&$truc<12){
+		                    						echo "<td>".price(round($value, 2))."</td>";
+		                    						$j++;
+		                    					}
+		                    				}
+		                    			}
+		                    		}
+	                    			if($j%2==0){
+	                    				if ($date_test[1] >= 12) {
+											$date_test[1]=1;
+											$date_test[2]++;
+										}
+										else{
+											$date_test[1]++;
+			                            }
+			                            if ($j<23) {
+			                            	echo "<td class=\"prev\" data-id=\"Achats10;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CA;$j\"></input></td>";
+			                            }									
+	                       			}
+	                       			else{
+	                       				echo "<td></td>";
+	                       			}	                       			
+	                    		}
+	                    		if(isset($_GET['re'])){
+	                            	$date_test = explode("/", $_GET['re']);
+	                            	$date_test[1]--;
+	                            }
+	                            else{
+	                            	$date_test = explode("-", date("d-m-Y"));
+	                            	$date_test[1]--;
+	                            }
+                        	?>
+                        	<td></td>
+                        	<td></td>
+                        	<td></td>
+                        </tr>
+                        <tr>
+                        	<td class="right">Achats 20% (HT)</td>
+                            <?php for ($j=0; $j < 25; $j++) {
+	                            	for($i=0; $i< 25; $i++){
+		                        		foreach($tresoPrev as $truc => $key){
+		                    				foreach($key as $row =>$value){
+		                    					$val = $truc*2;
+		                                    	$val2 = $j;
+												if($row == "Achats20" && $val==$val2 && $truc<12){
+	                    							if ($date_test[1] >= 12) {
+														$date_test[1]=1;
+														$date_test[2]++;
+													}
+													else{
+														$date_test[1]++;
+													}
+	                    							echo "<td class=\"prev\" data-id=\"$row;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"$row;$j\"></input>".price($value)/*round($value, 2)*/."</td>";
+	                    							$j++;
+	                    						}
+		                    				}
+		                    			}
+		                    			foreach($tresoReel as $truc => $key){
+		                    				foreach($key as $row =>$value){
+		                    					$val = ($truc*2)-1;
+		                                        $val2 =  $j-2;
+		                    					if($row == "Achats20" && $val==$val2 &&$truc<12){
+		                    						echo "<td>".price(round($value, 2))."</td>";
+		                    						$j++;
+		                    					}
+		                    				}
+		                    			}
+		                    		}
+	                    			if($j%2==0){
+	                    				if ($date_test[1] >= 12) {
+											$date_test[1]=1;
+											$date_test[2]++;
+										}
+										else{
+											$date_test[1]++;
+			                            }
+			                            if ($j<23) {
+			                            	echo "<td class=\"prev\" data-id=\"Achats20;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CA;$j\"></input></td>";
+			                            }									
+	                       			}
+	                       			else{
+	                       				echo "<td></td>";
+	                       			}	                       			
+	                    		}
+	                    		if(isset($_GET['re'])){
+	                            	$date_test = explode("/", $_GET['re']);
+	                            	$date_test[1]--;
+	                            }
+	                            else{
+	                            	$date_test = explode("-", date("d-m-Y"));
+	                            	$date_test[1]--;
+	                            }
+                        	?>
+                        	<td></td>
+                        	<td></td>
+                        	<td></td>
                         </tr>
                         <tr>
                             <td class="right"><b>Total des achats</b></td>
@@ -805,7 +1176,7 @@ $moisPrecedent = array();
 	                            	$date_test = explode("-", date("d-m-Y"));
 	                            	$date_test[1]--;
 	                            }
-	                            if ($pourcentage_cumul_total_charge != 0) {
+	                            if ($pourcentage_cumul_solde_tresorerie != 0) {
 	                            	echo "<td style='color:red'>".round($pourcentage_cumul_solde_tresorerie,2)."</td>";
 	                            }
 	                            else{
@@ -1148,27 +1519,6 @@ if ($action == 'list')
 
     print '</table>'."\n";
 }
-
-include('phpGraph/phpGraph.php');
-//We call an instance of phpGraph() class
-$ca_N_moins_1 = $tresorerie->getCA_N_moins_1();
-$ca_N = $tresorerie->getCA_N();
-$tab = array($ca_N, $ca_N_moins_1);
-$G = new phpGraph();
-$options = array(
-	'steps' => 1000,
-  'width' => 700,// (int) width of grid
-  'height' => 700,// (int) height of grid
-  'multi'=>true,
-  'filled'=>false,
-  'stroke' => array(
-                '0'=>'red',
-                '1'=>'blue'
-    )
-);
-echo $G->draw($tab, $options);
-
-
 
 // End of page
 llxFooter();

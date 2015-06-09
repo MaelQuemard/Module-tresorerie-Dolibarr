@@ -1644,8 +1644,11 @@ class phpGraph {
 	 *
 	 * @author Cyril MAGUIRE
 	 */
-	protected function putInCache($svg,$outputName='svg',$outputDir='data/img/') {
-		if (!is_dir($outputDir)) {
+	public function putInCache($svg,$outputName='svg',$outputDir='data/img/') {
+		$f = fopen($outputName.".svg", "w");
+		fwrite($f, $svg);
+		fclose($f);
+		/*if (!is_dir($outputDir)) {
 			mkdir($outputDir);
 		}
 		// To avoid multiple file in a directory, we delete all (I know it's brutal)
@@ -1654,7 +1657,7 @@ class phpGraph {
 			unlink($file);
 		}
 		// Then, we record only one file
-		file_put_contents($outputDir.$outputName.'.svg', $svg);
+		file_put_contents($outputDir.$outputName.'.svg', $svg);*/
 	}
 
 	# Work in progress......

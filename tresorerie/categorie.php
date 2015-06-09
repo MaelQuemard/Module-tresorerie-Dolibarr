@@ -150,19 +150,21 @@ $link = $connect->link();
 
     <?php      
     while($data = mysqli_fetch_assoc($result)) {
-        $index++;
-        ($index%2==0) ? $t = $class[0] : $t =$class[1];
-        $label .= $data['label'].";";
-        $prin .= "<tr class=\"$t\" ><td name=\"$index\">".$data['label']."</td>";
-        for ($i=0; $i < 5; $i++) { 
-            if ($id[$i] == $data['taux']) {
-                $prin .= "<td><input type=\"radio\" name=\"$index\" value=\"$id[$i]\" checked></td>";
+        if ($data['label'] != "CA Ventes 10" && $data['label'] != "CA Ventes 20" && $data['label'] != "CA Ventes 0" && $data['label'] != "Achats 0" && $data['label'] != "Achats 10" && $data['label'] != "Achats 20") {
+            $index++;
+            ($index%2==0) ? $t = $class[0] : $t =$class[1];
+            $label .= $data['label'].";";
+            $prin .= "<tr class=\"$t\" ><td name=\"$index\">".$data['label']."</td>";
+            for ($i=0; $i < 5; $i++) { 
+                if ($id[$i] == $data['taux']) {
+                    $prin .= "<td><input type=\"radio\" name=\"$index\" value=\"$id[$i]\" checked></td>";
+                }
+                else{
+                    $prin .= "<td><input type=\"radio\" name=\"$index\" value=\"$id[$i]\"></td>";
+                }
             }
-            else{
-                $prin .= "<td><input type=\"radio\" name=\"$index\" value=\"$id[$i]\"></td>";
-            }
+            $prin .= "</tr>";
         }
-        $prin .= "</tr>";
     }
     print ($prin);
     ?>
@@ -185,6 +187,13 @@ $link = $connect->link();
                 }
             }
         }
+    }
+    $query = "SELECT bc.rowid FROM llx_bank_categ as bc WHERE bc.rowid NOT IN (SELECT ct.fk_bank_categ FROM llx_categ_tva as ct);";
+    $req3 = mysqli_query($link, $query) or die(mysqli_error($link));
+    $query2;
+    while ($data = mysqli_fetch_assoc($req3)) {
+        $query2 = "INSERT INTO llx_categ_tva (fk_c_tva, fk_bank_categ) VALUES (11, ".$data['rowid'].");";
+        mysqli_query($link, $query2);
     }
 
 // Example 1 : Adding jquery code

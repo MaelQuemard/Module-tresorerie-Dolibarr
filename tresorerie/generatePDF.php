@@ -12,7 +12,7 @@ if (! $res) die("Include of main fails");
 	$link = $connect->link();
 	$moisM = date("m");
 	$annee = date("Y");
-	$tresorerie = new tresorerie($db, $link);
+	$tresorerie = new tresorerie($link);
 
 	$nb_lignes = $tresorerie->getNbLignes();
 	$categorie = $tresorerie->getCategorie();
@@ -659,7 +659,7 @@ if (! $res) die("Include of main fails");
 	                            	$date_test = explode("-", date("d-m-Y"));
 	                            	$date_test[1]--;
 	                            }
-	                            if ($pourcentage_cumul_total_charge != 0) {
+	                            if ($pourcentage_cumul_solde_tresorerie != 0) {
 	                            	echo "<td style='color:red'>".round($pourcentage_cumul_solde_tresorerie,2)."</td>";
 	                            }
 	                            else{
