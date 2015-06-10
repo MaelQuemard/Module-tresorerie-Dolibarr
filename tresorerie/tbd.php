@@ -382,7 +382,7 @@ $moisPrecedent = array();
                         	<td></td>
                         	<td></td>
                         </tr>
-                        <tr>
+                        <tr class="pair">
                         	<td class="right">CA - Ventes 0%</td>
                             <?php for ($j=0; $j < 25; $j++) {
 	                            	for($i=0; $i< 25; $i++){
@@ -443,7 +443,7 @@ $moisPrecedent = array();
                         	<td></td>
                         	<td></td>
                         </tr>
-                        <tr>
+                        <tr class="impair">
                         	<td class="right">CA - Ventes 10% (HT)</td>
                             <?php for ($j=0; $j < 25; $j++) {
 	                            	for($i=0; $i< 25; $i++){
@@ -504,7 +504,7 @@ $moisPrecedent = array();
                         	<td></td>
                         	<td></td>
                         </tr>
-                        <tr>
+                        <tr class="pair">
                         	<td class="right">CA - Ventes 20% (HT)</td>
                             <?php for ($j=0; $j < 25; $j++) {
 	                            	for($i=0; $i< 25; $i++){
@@ -565,7 +565,7 @@ $moisPrecedent = array();
                         	<td></td>
                         	<td></td>
                         </tr>
-                        <tr>
+                        <tr class="impair">
                             <td class="right"><b>Chiffre d'affaires (HT)</b></td>
                             <?php for ($j=0; $j < 25; $j++) {
 	                            	for($i=0; $i< 25; $i++){
@@ -641,7 +641,7 @@ $moisPrecedent = array();
                             <td><b>Achats (HT)</b></td>
                              <?php for ($i=0; $i < 27; $i++) {?><td></td> <?php } ?>
                         </tr>
-                        <tr>
+                        <tr class="pair">
                         	<td class="right">Achats 0%</td>
                             <?php for ($j=0; $j < 25; $j++) {
 	                            	for($i=0; $i< 25; $i++){
@@ -702,7 +702,7 @@ $moisPrecedent = array();
                         	<td></td>
                         	<td></td>
                         </tr>
-                        <tr>
+                        <tr class="impair">
                         	<td class="right">Achats 10% (HT)</td>
                             <?php for ($j=0; $j < 25; $j++) {
 	                            	for($i=0; $i< 25; $i++){
@@ -763,7 +763,7 @@ $moisPrecedent = array();
                         	<td></td>
                         	<td></td>
                         </tr>
-                        <tr>
+                        <tr class="pair">
                         	<td class="right">Achats 20% (HT)</td>
                             <?php for ($j=0; $j < 25; $j++) {
 	                            	for($i=0; $i< 25; $i++){
@@ -824,7 +824,7 @@ $moisPrecedent = array();
                         	<td></td>
                         	<td></td>
                         </tr>
-                        <tr>
+                        <tr class="impair">
                             <td class="right"><b>Total des achats</b></td>
                             <?php 
                         		for ($j=0; $j < 25; $j++) {
@@ -851,7 +851,7 @@ $moisPrecedent = array();
 		                    					$val = ($truc*2)-1;
 		                                        $val2 = $j-2;
 		                    					if($row == "achat" && $val==$val2 && $truc<12){
-		                    						echo "<td><b>".price(round($value*(100/(20+100)), 2))."</b></td>";
+		                    						echo "<td><b>".price(round($value, 2))."</b></td>";
 		                    						$j++;
 		                    					}
 		                    				}
@@ -870,7 +870,7 @@ $moisPrecedent = array();
 			                            }
 			                            else{
 			                            	echo "<td>".price(round($cumul_achat_prev, 2))."</td>";
-	                           				echo "<td><b>".price(round($cumul_achat*(100/(20+100)), 2))."</b></td>";
+	                           				echo "<td><b>".price(round($cumul_achat, 2))."</b></td>";
 			                            }
 	                       			}
 	                       			else{

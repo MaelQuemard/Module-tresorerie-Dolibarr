@@ -1094,7 +1094,7 @@ class tresorerie extends CommonObject
 			$_les_dates_treso = explode("-",$valeur['date']);	
 			if (($_les_dates_treso[0]."-".$_les_dates_treso[1]) >= $date_temp_demande) {
 				if ($_les_dates_treso[1]==1) {
-					$date_temp_a = $_les_dates_treso[0]."-12";
+					$date_temp_a = ($_les_dates_treso[0]-1)."-12";
 				}
 				elseif ($_les_dates_treso[1]<=10) {
 					$date_temp_a = $_les_dates_treso[0]."-0".($_les_dates_treso[1]-1);
@@ -1111,6 +1111,7 @@ class tresorerie extends CommonObject
 					foreach ($solde_courant_reel as $key => $valueSoldeCourant) {
 						$key = explode("-",$key);
 						if (($key[0]."-".$key[1]) == $date_temp_a && !$ok) {
+							echo $date_temp_a;
 							$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] = $valueSoldeCourant;
 							$ok=true;
 							$query_update_solde_debut = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET soldeDebut = '".$valueSoldeCourant."' WHERE date >= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-01' AND date <= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-28' AND type = 'reel';";
@@ -1840,9 +1841,9 @@ class tresorerie extends CommonObject
 			for ($i=0; $i < $nb; $i++) {
 				$finfo = mysqli_fetch_field_direct($res, $i);
 				foreach ($taux as $categTaux => $valueTaux) {
-					if($categTaux == $finfo->name){
-						if ($j[$row[$categTaux]]<12) {
-							if ($data[$i] != NULL) {
+					if ($categTaux != "CAVentes10" && $categTaux != "CAVentes20" && $categTaux != "CAVentes0" && $categTaux != "Achats10" && $categTaux != "Achats20" && $categTaux != "Achats0") {
+						if($categTaux == $finfo->name){
+							if ($j[$row[$categTaux]]<12) {
 								if ($finfo->name == "TVA") {
 									$tab1[$row[$categTaux]] += round(-$data[$i], 2);
 								}
@@ -1850,8 +1851,8 @@ class tresorerie extends CommonObject
 									$tab1[$row[$categTaux]] += round(-$data[$i]*(100/($valueTaux+100)), 2);
 								}
 							}
+							$j[$row[$categTaux]]++;
 						}
-						$j[$row[$categTaux]]++;
 					}
 				}
 			}
@@ -1892,12 +1893,14 @@ class tresorerie extends CommonObject
 			for ($i=0; $i < $nb; $i++) {
 				$finfo = mysqli_fetch_field_direct($res, $i);
 				foreach ($taux as $categTaux => $valueTaux) {
+					if ($categTaux != "CAVentes10" && $categTaux != "CAVentes20" && $categTaux != "CAVentes0" && $categTaux != "Achats10" && $categTaux != "Achats20" && $categTaux != "Achats0") {
 						if($categTaux == $finfo->name){
 							if ($j[$row[$categTaux]]<12) {
 								$tab1[$row[$categTaux]] += round(-$data[$i], 2);
 							}
 							$j[$row[$categTaux]]++;
 						}
+					}
 				}
 			}
 		}
