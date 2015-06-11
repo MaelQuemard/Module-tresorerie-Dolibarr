@@ -112,6 +112,24 @@ for ($i=0; $i <= $nb_lignes; $i++) {
 		if (isset($_POST["CA;$j"])) {
 			$tresorerie->setPrevisionel($_POST["CA;$j"]);
 		}
+		if (isset($_POST["CAVentes0;$j"])) {
+			$tresorerie->setPrevisionel($_POST["CAVentes0;$j"]);
+		}
+		if (isset($_POST["CAVentes10;$j"])) {
+			$tresorerie->setPrevisionel($_POST["CAVentes10;$j"]);
+		}
+		if (isset($_POST["CAVentes20;$j"])) {
+			$tresorerie->setPrevisionel($_POST["CAVentes20;$j"]);
+		}
+		if (isset($_POST["Achats0;$j"])) {
+			$tresorerie->setPrevisionel($_POST["Achats0;$j"]);
+		}
+		if (isset($_POST["Achats10;$j"])) {
+			$tresorerie->setPrevisionel($_POST["Achats10;$j"]);
+		}
+		if (isset($_POST["Achats20;$j"])) {
+			$tresorerie->setPrevisionel($_POST["Achats20;$j"]);
+		}	
 	}
 }
 if (isset($_GET['synchro'])) {
@@ -248,11 +266,11 @@ $moisPrecedent = array();
             <b>*Il est préferable de choisir le premier de chaque mois</b>
             <form action="#" method="post">
                 <table id="tableau" class="border nohover" width="100%">
-                    <tbody>
+                    <thead>
                         <tr class="liste_titre">
-                            <td class="center">
+                            <th class="center">
                                 <?php echo $nom; ?>
-                            </td>
+                            </th>
                             <?php
                                 if (isset($_GET['re'])) {
                                     $date_Debut = explode("/" ,$_GET['re']);
@@ -260,7 +278,7 @@ $moisPrecedent = array();
                                     foreach ($mois as $key => $value) {
                                         if ($date_Debut[1] <= $key+1) {
                                             ?>
-                                                <td class="center" colspan="2"><b><?php echo $value." - ".$date_Debut[2]; ?></b></td>
+                                                <th class="center" colspan="2"><b><?php echo $value." - ".$date_Debut[2]; ?></b></th>
                                             <?php
                                         }
                                         else {
@@ -270,17 +288,17 @@ $moisPrecedent = array();
                                     }
                                     for ($i=0; $i <= sizeof($moisPrecedent)-1; $i++) { 
                                         ?>
-                                            <td class="center" colspan="2"><b><?php echo $mois[$i]." - ".(intval($date_Debut[2])+1); ?></b></td>
+                                            <th class="center" colspan="2"><b><?php echo $mois[$i]." - ".(intval($date_Debut[2])+1); ?></b></th>
                                         <?php
                                     }
-                                    ?> <td class="center" colspan="2"><b>Cumul</b></td>
-                                    <td class="center" colspan="2" style="padding:0px 10px 0px 10px;"><b>%</b></td> <?php
+                                    ?> <th class="center" colspan="2"><b>Cumul</b></th>
+                                    <th class="center" colspan="2" style="padding:0px 10px 0px 10px;"><b>%</b></th> <?php
                                 }
                                 else{
                                     for ($i=0; $i <= 12; $i++) {
                                         if ($i >= $moisM) {
                                         ?>
-                                            <td class="center" colspan="2"><b><?php echo $mois[$i-1]." - ".$annee; ?></b></td>
+                                            <th class="center" colspan="2"><b><?php echo $mois[$i-1]." - ".$annee; ?></b></th>
                                         <?php
                                         }
                                         else {
@@ -289,14 +307,16 @@ $moisPrecedent = array();
                                     }
                                     for ($i=0; $i < sizeof($moisPrecedent)-1; $i++) { 
                                         ?>
-                                            <td class="center" colspan="2"><b><?php echo $mois[$i]." - ".(intval($annee)+1); ?></b></td>
+                                            <th class="center" colspan="2"><b><?php echo $mois[$i]." - ".(intval($annee)+1); ?></b></th>
                                         <?php
                                     }
-                                    ?> <td class="center" colspan="2"><b>Cumul</b></td>
-                                    <td class="center" colspan="2" style="padding:0px 10px 0px 10px;"><b>%</b></td> <?php
+                                    ?> <th class="center" colspan="2"><b>Cumul</b></th>
+                                    <th class="center" colspan="2" style="padding:0px 10px 0px 10px;"><b>%</b></th> <?php
                                 }
                             ?>
                         </tr>
+                        </thead>
+                        <tbody>
                         <tr>
                             <td>
                             </td>
@@ -423,7 +443,7 @@ $moisPrecedent = array();
 											$date_test[1]++;
 			                            }
 			                            if ($j<23) {
-			                            	echo "<td class=\"prev\" data-id=\"CAVentes10;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CA;$j\"></input></td>";
+			                            	echo "<td class=\"prev\" data-id=\"CAVentes0;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CAVentes0;$j\"></input></td>";
 			                            }								
 	                       			}
 	                       			else{
@@ -484,7 +504,7 @@ $moisPrecedent = array();
 											$date_test[1]++;
 			                            }
 			                            if ($j<23) {
-			                            	echo "<td class=\"prev\" data-id=\"CAVentes10;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CA;$j\"></input></td>";
+			                            	echo "<td class=\"prev\" data-id=\"CAVentes10;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CAVentes10;$j\"></input></td>";
 			                            }								
 	                       			}
 	                       			else{
@@ -545,7 +565,7 @@ $moisPrecedent = array();
 											$date_test[1]++;
 			                            }
 			                            if ($j<23) {
-			                            	echo "<td class=\"prev\" data-id=\"CAVentes20;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CA;$j\"></input></td>";
+			                            	echo "<td class=\"prev\" data-id=\"CAVentes20;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CAVentes20;$j\"></input></td>";
 			                            }									
 	                       			}
 	                       			else{
@@ -682,7 +702,7 @@ $moisPrecedent = array();
 											$date_test[1]++;
 			                            }
 			                            if ($j<23) {
-			                            	echo "<td class=\"prev\" data-id=\"Achats0;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CA;$j\"></input></td>";
+			                            	echo "<td class=\"prev\" data-id=\"Achats0;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"Achats0;$j\"></input></td>";
 			                            }									
 	                       			}
 	                       			else{
@@ -743,7 +763,7 @@ $moisPrecedent = array();
 											$date_test[1]++;
 			                            }
 			                            if ($j<23) {
-			                            	echo "<td class=\"prev\" data-id=\"Achats10;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CA;$j\"></input></td>";
+			                            	echo "<td class=\"prev\" data-id=\"Achats10;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"Achats10;$j\"></input></td>";
 			                            }									
 	                       			}
 	                       			else{
@@ -804,7 +824,7 @@ $moisPrecedent = array();
 											$date_test[1]++;
 			                            }
 			                            if ($j<23) {
-			                            	echo "<td class=\"prev\" data-id=\"Achats20;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"CA;$j\"></input></td>";
+			                            	echo "<td class=\"prev\" data-id=\"Achats20;$date_test[2]-$date_test[1]-$date_test[0]\"><input type=\"hidden\" name=\"Achats20;$j\"></input></td>";
 			                            }									
 	                       			}
 	                       			else{

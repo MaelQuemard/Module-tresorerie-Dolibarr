@@ -587,7 +587,7 @@ class tresorerie extends CommonObject
 			if (strlen($info[0])<1 || $info[0]=="" || $info[0]==" " || $info[0]==0) {
 				$info[0]="NULL";
 			}
-			if (!strstr("-", $info[0]) && $info[0]!="NULL" && $info[1]!="CA") {
+			if (!strstr("-", $info[0]) && $info[0]!="NULL" && $info[1]!="CA"  && $info[1]!="CAVentes0"  && $info[1]!="CAVentes10"  && $info[1]!="CAVentes20") {
 				$info[0] = "-".$info[0];
 			}
 			$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET $info[1]=$info[0], type='prev' WHERE type='prev' AND date BETWEEN '$info_date_D' AND '$info_date_F';";
@@ -1033,7 +1033,7 @@ class tresorerie extends CommonObject
 		}
 
 		$le_tab = array();
-		$sql = "SELECT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount > 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ba.entity = '$this->entity';";
+		$sql = "SELECT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount < 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ba.entity = '$this->entity';";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$date = explode("-", $data['dateo']);
@@ -1111,7 +1111,6 @@ class tresorerie extends CommonObject
 					foreach ($solde_courant_reel as $key => $valueSoldeCourant) {
 						$key = explode("-",$key);
 						if (($key[0]."-".$key[1]) == $date_temp_a && !$ok) {
-							echo $date_temp_a;
 							$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] = $valueSoldeCourant;
 							$ok=true;
 							$query_update_solde_debut = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET soldeDebut = '".$valueSoldeCourant."' WHERE date >= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-01' AND date <= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-28' AND type = 'reel';";

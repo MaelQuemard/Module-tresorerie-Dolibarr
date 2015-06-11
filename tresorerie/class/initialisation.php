@@ -103,12 +103,14 @@ class initialisation extends CommonObject
 		$data = mysqli_fetch_array($rep);
 		if (empty($data)) {
 			$query = "INSERT INTO llx_bank_categ (label, entity) VALUES ('CA Ventes 0', $this->entity)";
+			$rep = mysqli_query($this->link, $query) or die(mysqli_error($this->link));
 		}
 		$query = "SELECT bc.rowid FROM llx_bank_categ  as bc where bc.label ='CA Ventes 0' AND bc.rowid NOT IN (SELECT ct.fk_bank_categ FROM llx_categ_tva as ct);";
 		$rep = mysqli_query($this->link, $query) or die(mysqli_error($this->link));
 		$data = mysqli_fetch_array($rep);
 		if (!empty($data)) {
 			$query2 = "INSERT INTO llx_categ_tva (fk_c_tva, fk_bank_categ) VALUES (15, ".$data['rowid'].");";
+			$rep = mysqli_query($this->link, $query2) or die(mysqli_error($this->link));
 		}
 
 		$query = "SELECT bc.label, bc.rowid FROM llx_bank_categ  as bc where bc.label ='CA Ventes 10'";
@@ -116,12 +118,14 @@ class initialisation extends CommonObject
 		$data = mysqli_fetch_array($rep);
 		if (empty($data)) {
 			$query = "INSERT INTO llx_bank_categ (label, entity) VALUES ('CA Ventes 10', $this->entity)";
+			$rep = mysqli_query($this->link, $query) or die(mysqli_error($this->link));
 		}
 		$query = "SELECT bc.rowid FROM llx_bank_categ  as bc where bc.label ='CA Ventes 10' AND bc.rowid NOT IN (SELECT ct.fk_bank_categ FROM llx_categ_tva as ct);";
 		$rep = mysqli_query($this->link, $query) or die(mysqli_error($this->link));
 		$data = mysqli_fetch_array($rep);
 		if (!empty($data)) {
 			$query2 = "INSERT INTO llx_categ_tva (fk_c_tva, fk_bank_categ) VALUES (17, ".$data['rowid'].");";
+			$rep = mysqli_query($this->link, $query2) or die(mysqli_error($this->link));
 		}
 
 		$query = "SELECT bc.label, bc.rowid FROM llx_bank_categ as bc where bc.label ='CA Ventes 20'";
@@ -129,12 +133,14 @@ class initialisation extends CommonObject
 		$data = mysqli_fetch_array($rep);
 		if (empty($data)) {
 			$query = "INSERT INTO llx_bank_categ (label, entity) VALUES ('CA Ventes 20', $this->entity)";
+			$rep = mysqli_query($this->link, $query) or die(mysqli_error($this->link));
 		}
 		$query = "SELECT bc.rowid FROM llx_bank_categ  as bc where bc.label ='CA Ventes 20' AND bc.rowid NOT IN (SELECT ct.fk_bank_categ FROM llx_categ_tva as ct);";
 		$rep = mysqli_query($this->link, $query) or die(mysqli_error($this->link));
 		$data = mysqli_fetch_array($rep);
 		if (!empty($data)) {
 			$query2 = "INSERT INTO llx_categ_tva (fk_c_tva, fk_bank_categ) VALUES (11, ".$data['rowid'].");";
+			$rep = mysqli_query($this->link, $query2) or die(mysqli_error($this->link));
 		}
 
 		$query = "SELECT bc.label, bc.rowid FROM llx_bank_categ as bc where bc.label ='Achats 0'";
@@ -142,12 +148,14 @@ class initialisation extends CommonObject
 		$data = mysqli_fetch_array($rep);
 		if (empty($data)) {
 			$query = "INSERT INTO llx_bank_categ (label, entity) VALUES ('Achats 0', $this->entity)";
+			$rep = mysqli_query($this->link, $query) or die(mysqli_error($this->link));
 		}
 		$query = "SELECT bc.rowid FROM llx_bank_categ  as bc where bc.label ='Achats 0' AND bc.rowid NOT IN (SELECT ct.fk_bank_categ FROM llx_categ_tva as ct);";
 		$rep = mysqli_query($this->link, $query) or die(mysqli_error($this->link));
 		$data = mysqli_fetch_array($rep);
 		if (!empty($data)) {
 			$query2 = "INSERT INTO llx_categ_tva (fk_c_tva, fk_bank_categ) VALUES (15, ".$data['rowid'].");";
+			$rep = mysqli_query($this->link, $query2) or die(mysqli_error($this->link));
 		}
 
 		$query = "SELECT bc.label, bc.rowid FROM llx_bank_categ as bc where bc.label ='Achats 10'";
@@ -155,12 +163,14 @@ class initialisation extends CommonObject
 		$data = mysqli_fetch_array($rep);
 		if (empty($data)) {
 			$query = "INSERT INTO llx_bank_categ (label, entity) VALUES ('Achats 10', $this->entity)";
+			$rep = mysqli_query($this->link, $query) or die(mysqli_error($this->link));
 		}
 		$query = "SELECT bc.rowid FROM llx_bank_categ  as bc where bc.label ='Achats 10' AND bc.rowid NOT IN (SELECT ct.fk_bank_categ FROM llx_categ_tva as ct);";
 		$rep = mysqli_query($this->link, $query) or die(mysqli_error($this->link));
 		$data = mysqli_fetch_array($rep);
 		if (!empty($data)) {
 			$query2 = "INSERT INTO llx_categ_tva (fk_c_tva, fk_bank_categ) VALUES (17, ".$data['rowid'].");";
+			$rep = mysqli_query($this->link, $query2) or die(mysqli_error($this->link));
 		}
 
 		$query = "SELECT bc.label, bc.rowid FROM llx_bank_categ as bc where bc.label ='Achats 20'";
@@ -168,12 +178,14 @@ class initialisation extends CommonObject
 		$data = mysqli_fetch_array($rep);
 		if (empty($data)) {
 			$query = "INSERT INTO llx_bank_categ (label, entity) VALUES ('Achats 20', $this->entity)";
+			$rep = mysqli_query($this->link, $query) or die(mysqli_error($this->link));
 		}
 		$query = "SELECT bc.rowid FROM llx_bank_categ  as bc where bc.label ='Achats 20' AND bc.rowid NOT IN (SELECT ct.fk_bank_categ FROM llx_categ_tva as ct);";
 		$rep = mysqli_query($this->link, $query) or die(mysqli_error($this->link));
 		$data = mysqli_fetch_array($rep);
 		if (!empty($data)) {
 			$query2 = "INSERT INTO llx_categ_tva (fk_c_tva, fk_bank_categ) VALUES (11, ".$data['rowid'].");";
+			$rep = mysqli_query($this->link, $query2) or die(mysqli_error($this->link));
 		}
 
 		$query = "SELECT bc.rowid FROM llx_bank_categ as bc WHERE bc.rowid NOT IN (SELECT ct.fk_bank_categ FROM llx_categ_tva as ct);";
@@ -183,6 +195,9 @@ class initialisation extends CommonObject
 			$query2 = "INSERT INTO llx_categ_tva (fk_c_tva, fk_bank_categ) VALUES (11, ".$data['rowid'].");";
 			mysqli_query($this->link, $query2);
 		}
+
+
+		mysqli_commit($this->link);
 	}
 
 	/**
@@ -532,8 +547,6 @@ class initialisation extends CommonObject
 							//$queryDebut = "UPDATE llx_tresorerie SET soldeDebut = '".$le_calcul."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
 						}
 					}
-					//$le_calcul = round($tab_sold_init[$date]+$tab_ca[$date]+$tab_achat[$date]+$tab_charge[$date]+$tab_valeur_sup[$date], 2);
-					echo "val :".$tab_valeur_sup[$date]." ca : ".$tab_ca[$date]." achat : ".$tab_achat[$date]." charges : ".$tab_charge[$date].": $date<br>";
 					$queryDebut = "UPDATE llx_tresorerie SET soldeDebut = '".$le_calcul."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
 					$le_calcul = round($le_calcul+$tab_ca[$date]+$tab_achat[$date]+$tab_charge[$date]+$tab_valeur_sup[$date], 2);
 					$queryCourant = "UPDATE llx_tresorerie SET soldeCourant = '".$le_calcul."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
