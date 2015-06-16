@@ -69,7 +69,7 @@ class tresorerie extends CommonObject
 	 */
 	public function getSolde()
 	{
-		$sql = "SELECT sum(b.amount) as amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.fk_account = 1 AND b.dateo <= '$this->date' AND ba.entity = '$this->entity' ";
+		$sql = "SELECT sum(b.amount) as amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.fk_account = ba.rowid AND b.dateo <= '$this->date' AND ba.entity = '$this->entity' ";
 		$res = mysqli_query($this->link, $sql) or die(mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$this->solde = $data["amount"];
@@ -192,7 +192,7 @@ class tresorerie extends CommonObject
 		$sql = "SELECT DISTINCT b.amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount < 0 AND b.dateo <= '$this->date'AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity';";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
-			$this->achat += $data['amount'];
+			$this->achat += round($data['amount']*(100/(20+100)), 2);
 		}
 		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 20';";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
@@ -234,7 +234,7 @@ class tresorerie extends CommonObject
 		while ($data = mysqli_fetch_assoc($res)) {
 			$achat_20 += $data['amount'];
 		}
-		return $ca_20;
+		return $achat_20;
 	}
 
 	public function getAchat_0()
@@ -1033,7 +1033,8 @@ class tresorerie extends CommonObject
 		}
 
 		$le_tab = array();
-		$sql = "SELECT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount < 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ba.entity = '$this->entity';";
+		//$sql = "SELECT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba WHERE b.amount < 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ba.entity = '$this->entity';";
+		$sql = "SELECT DISTINCT b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount < 0 AND b.dateo >= '".date("Y")."-".(date("m")+1)."-01' AND ba.entity = '$this->entity';";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$date = explode("-", $data['dateo']);

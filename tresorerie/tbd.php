@@ -228,7 +228,7 @@ $moisPrecedent = array();
                     <img border="0" title="" alt="" src="/dolibarr/htdocs/theme/eldy/img/title.png"></img>
                 </td>
                 <td class="nobordernopadding">
-                    <div class="titre">Tableau de bord</div>
+                    <div class="titre">Tableau de trésorerie</div>
                 </td>
                 <td class="nobordernopadding">
                 <form action="#">

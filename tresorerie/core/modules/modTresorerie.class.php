@@ -219,7 +219,7 @@ class modTresorerie extends DolibarrModules
 
 		 $this->menu[$r]=array(	'fk_menu'=>'fk_mainmenu=accountancy,fk_leftmenu=Tresorerie',		    // Use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
 									'type'=>'left',			                // This is a Left menu entry
-									'titre'=>'Tableau de bord',
+									'titre'=>'Tableau de trésorerie',
 									'mainmenu'=>'accountancy',
 									'url'=>'/tresorerie/tbd.php?account=1',
 									'langs'=>'mylangfile@mymodule',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
