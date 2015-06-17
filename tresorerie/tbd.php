@@ -645,7 +645,7 @@ $moisPrecedent = array();
 	                            	$date_test = explode("-", date("d-m-Y"));
 	                            	$date_test[1]--;
 	                            }
-	                            if ($pourcentage_cumul_ca != 0) {
+	                            if ($pourcentage_cumul_ca > 0) {
 	                            	echo "<td style='color:red'>".round($pourcentage_cumul_ca,2)."</td>";
 	                            }
 	                            else{
@@ -905,7 +905,7 @@ $moisPrecedent = array();
 	                            	$date_test = explode("-", date("d-m-Y"));
 	                            	$date_test[1]--;
 	                            }
-	                            if ($pourcentage_cumul_achat != 0) {
+	                            if ($pourcentage_cumul_achat > 0) {
 	                            	echo "<td style='color:red'>".round($pourcentage_cumul_achat,2)."</td>";
 	                            }
 	                            else{
@@ -1032,7 +1032,7 @@ $moisPrecedent = array();
 				                            if ($j==26) {
 				                            	foreach ($pourcentage_cumul_charge as $categ => $value) {
 				                            		if ($categ == $categorie[$i]) {
-				                            			if ($value != 0) {
+				                            			if ($value > 0) {
 				                            				echo "<td style='color:red'>".round($value,2)."</td>";
 				                            			}
 				                            			else{
@@ -1122,7 +1122,7 @@ $moisPrecedent = array();
 	                            	$date_test = explode("-", date("d-m-Y"));
 	                            	$date_test[1]--;
 	                            }
-	                            if ($pourcentage_cumul_total_charge != 0) {
+	                            if ($pourcentage_cumul_total_charge > 0) {
 	                            	echo "<td style='color:red'>".round($pourcentage_cumul_total_charge,2)."</td>";
 	                            }
 	                            else{
@@ -1196,7 +1196,7 @@ $moisPrecedent = array();
 	                            	$date_test = explode("-", date("d-m-Y"));
 	                            	$date_test[1]--;
 	                            }
-	                            if ($pourcentage_cumul_solde_tresorerie != 0) {
+	                            if ($pourcentage_cumul_solde_tresorerie > 0) {
 	                            	echo "<td style='color:red'>".round($pourcentage_cumul_solde_tresorerie,2)."</td>";
 	                            }
 	                            else{

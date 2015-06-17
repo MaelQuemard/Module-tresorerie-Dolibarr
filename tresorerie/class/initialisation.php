@@ -289,6 +289,7 @@ class initialisation extends CommonObject
 			$date = explode("-", $data['dateo']);
 			$dates = $date[0]."-".$date[1];
 			if ($data['fk_type'] != "SOLD") {
+				$tab_select[$dates] += $data['amount'];
 				$tableau_montant_categorie[$dates] += $data['amount']*(100/(20+100));
 				$tableau_ca_20[$dates] += $data['amount'];
 			}
@@ -299,6 +300,7 @@ class initialisation extends CommonObject
 		while ($data = mysqli_fetch_assoc($resul)) {
 			$date = explode("-", $data['dateo']);
 			$dates = $date[0]."-".$date[1];
+			$tab_select[$dates] += $data['amount'];
 			$tableau_montant_categorie[$dates] += $data['amount']*(100/(20+100));
 			$tableau_ca_20[$dates] += $data['amount'];
 		}
@@ -310,6 +312,7 @@ class initialisation extends CommonObject
 			$dates = $date[0]."-".$date[1];
 			$tableau_montant_categorie[$dates] += $data['amount']*(100/(10+100));
 			$tableau_ca_10[$dates] += $data['amount'];
+			$tab_select[$dates] += $data['amount'];
 		}
 		$tableau_ca_0 = array();
 		$sql2 = "SELECT DISTINCT bcat.label, b.amount, b.dateo FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 0';";
@@ -319,10 +322,11 @@ class initialisation extends CommonObject
 			$dates = $date[0]."-".$date[1];
 			$tableau_montant_categorie[$dates] += $data['amount'];
 			$tableau_ca_0[$dates] += $data['amount'];
+			$tab_select[$dates] += $data['amount'];
 		}
 		$tableau_des_dates[] = array();
 		$tab_insert = array();
-		$tab_select = array();
+		
 		foreach ($tableau_montant_categorie as $date => $tableau_categ) {
 			if (empty($tableau_categ)) {
 				$query = "UPDATE llx_tresorerie SET CA = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-28' AND type='reel';";
@@ -355,7 +359,7 @@ class initialisation extends CommonObject
 			}
 			mysqli_query($this->link, $query);
 		}
-		return $tableau_montant_categorie;
+		return $tab_select;
 	}
 
 	/**
@@ -374,6 +378,7 @@ class initialisation extends CommonObject
 		while($data = mysqli_fetch_array($res, MYSQLI_ASSOC)){
 			$date = explode("-", $data['dateo']);
 			$dates = $date[0]."-".$date[1];
+			$tab_select[$dates] += $data['amount'];
 			$tableau_montant_categorie[$dates] += $data['amount']*(100/(20+100));
 			$tableau_achat_20[$dates] += $data['amount'];
 			$tab_20[$dates] += $data['amount'];
@@ -384,6 +389,7 @@ class initialisation extends CommonObject
 		while ($data = mysqli_fetch_assoc($resul)) {
 			$date = explode("-", $data['dateo']);
 			$dates = $date[0]."-".$date[1];
+			$tab_select[$dates] += $data['amount'];
 			$tableau_montant_categorie[$dates] += $data['amount']*(100/(20+100));
 			$tableau_achat_20[$dates] += $data['amount'];
 			$tab_20[$dates] += $data['amount'];
@@ -393,6 +399,7 @@ class initialisation extends CommonObject
 		while ($data = mysqli_fetch_assoc($rest)) {
 			$date = explode("-", $data['dateo']);
 			$dates = $date[0]."-".$date[1];
+			$tab_select[$dates] += $data['amount'];
 			$tableau_montant_categorie[$dates] += $data['amount']*(100/(10+100));
 			$tableau_achat_10[$dates] += $data['amount'];
 			$tab_20[$dates] += $data['amount'];
@@ -403,13 +410,14 @@ class initialisation extends CommonObject
 		while ($data = mysqli_fetch_assoc($rest)) {
 			$date = explode("-", $data['dateo']);
 			$dates = $date[0]."-".$date[1];
+			$tab_select[$dates] += $data['amount'];
 			$tableau_montant_categorie[$dates] += $data['amount'];
 			$tableau_achat_0[$dates] += $data['amount'];
 			$tab_20[$dates] += $data['amount'];
 		}
 		$tableau_des_dates[] = array();
 		$tab_insert = array();
-		$tab_select = array();
+		//$tab_select = array();
 		foreach ($tableau_montant_categorie as $date => $tableau_categ) {
 			if (empty($tableau_categ)) {
 				$query = "UPDATE llx_tresorerie SET achat = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-28' AND type='reel';";
@@ -474,7 +482,7 @@ class initialisation extends CommonObject
 			mysqli_query($this->link, $query);
 			$tableau_des_dates[] = $date_par_mois;
 		}*/
-		return $tab_20;
+		return $tab_select;
 	}
 
 	/**
@@ -515,7 +523,7 @@ class initialisation extends CommonObject
 	{
 		$annee = date("Y");
 		$annee--;
-		$query = "SELECT b.amount, b.dateo FROM llx_bank as b where fk_type='SOLD' order by dateo ASC;";
+		$query = "SELECT b.amount, b.dateo FROM llx_bank as b, llx_bank_account as ba where fk_type='SOLD' AND ba.rowid = b.fk_account AND ba.entity = '$this->entity' order by dateo ASC;";
 		$res = mysqli_query($this->link, $query)or die(mysqli_error($this->link));
 		while ($data = mysqli_fetch_assoc($res)) {
 			$dat = explode("-", $data['dateo']);
@@ -523,6 +531,7 @@ class initialisation extends CommonObject
 			$query_init_solde = "UPDATE llx_tresorerie SET soldeDebut = '".$data['amount']."' WHERE date >= '".$dat[0]."-".$dat[1]."-01' AND date <= '".$dat[0]."-".$dat[1]."-28' AND type='reel';";
 			mysqli_query($this->link, $query_init_solde)or die(mysqli_error($this->link));
 		}
+		print_r($tab_sold_init);
 		for ($i=$annee; $i <= date("Y") ; $i++) { 
 			for ($j=1; $j <= 12 ; $j++) { 
 				if ($j<10) {
@@ -531,26 +540,34 @@ class initialisation extends CommonObject
 				else{
 					$date= $i."-".$j;
 				}
-				/*if ($date == $i."-01") {
-					$le_calcul = round($tab_sold_init[$date]+$tab_ca[$date]+$tab_achat[$date]+$tab_charge[$date]+$tab_valeur_sup[$date], 2);
-					//$queryCourant = "UPDATE llx_tresorerie SET soldeCourant = '".$le_calcul."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
-					$queryDebut = "UPDATE llx_tresorerie SET soldeDebut = '".$tab_sold_init[$date]."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				foreach ($tab_sold_init as $key => $value) {
+					if ($date == $key) {
+						$le_calcul = round($tab_sold_init[$date]+$tab_ca[$date]+$tab_achat[$date]+$tab_charge[$date]+$tab_valeur_sup[$date], 2);
+						$queryCourant = "UPDATE llx_tresorerie SET soldeCourant = '".$le_calcul."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+						$queryDebut = "UPDATE llx_tresorerie SET soldeDebut = '".$tab_sold_init[$date]."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+					}
+					elseif ($date<= date("Y-m")) {
+						$queryDebut = "UPDATE llx_tresorerie SET soldeDebut = ".$le_calcul." WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+						$le_calcul = round($le_calcul+$tab_ca[$date]+$tab_achat[$date]+$tab_charge[$date]+$tab_valeur_sup[$date], 2);
+						$queryCourant = "UPDATE llx_tresorerie SET soldeCourant = ".$le_calcul." WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+					}
 				}
-				else*/
-				if ($date<= date("Y-m")) {
+				
+				/*if ($date<= date("Y-m")) {
 					foreach ($tab_sold_init as $key => $value) {
 						if ($key == $date) {
 							$le_calcul = round($tab_sold_init[$date]+$tab_ca[$date]+$tab_achat[$date]+$tab_charge[$date]+$tab_valeur_sup[$date], 2);
 							$queryCourant = "UPDATE llx_tresorerie SET soldeCourant = '".$le_calcul."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+							echo $tab_sold_init[$date];
 							$queryDebut = "UPDATE llx_tresorerie SET soldeDebut = '".$tab_sold_init[$date]."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
 
 							//$queryDebut = "UPDATE llx_tresorerie SET soldeDebut = '".$le_calcul."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
 						}
 					}
-					$queryDebut = "UPDATE llx_tresorerie SET soldeDebut = '".$le_calcul."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+					//$queryDebut = "UPDATE llx_tresorerie SET soldeDebut = '".$le_calcul."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
 					$le_calcul = round($le_calcul+$tab_ca[$date]+$tab_achat[$date]+$tab_charge[$date]+$tab_valeur_sup[$date], 2);
 					$queryCourant = "UPDATE llx_tresorerie SET soldeCourant = '".$le_calcul."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
-				}
+				}*/
 				mysqli_query($this->link, $queryCourant)or die(mysqli_error($this->link));
 				mysqli_query($this->link, $queryDebut)or die(mysqli_error($this->link));
 			}
