@@ -202,8 +202,8 @@ class initialisation extends CommonObject
 
 	/**
 	*	This method get amount associate with category
-	*
-	*	@return array $charge_reel
+	*	@param array $categ array with category
+	*	@return array $charge_reel the fixed charges
 	*/
 	public function getCharge_test($categ)
 	{
@@ -283,7 +283,7 @@ class initialisation extends CommonObject
 	{
 		$tableau_montant_categorie = array();
 		$tableau_ca_20 = array();
-		$sql = "SELECT b.rowid, b.dateo, b.amount, b.fk_type FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount >= 0 AND ba.entity = '$this->entity' ORDER BY b.dateo ASC";
+		$sql = "SELECT b.rowid, b.dateo, b.amount, b.fk_type FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount >= 0 AND ba.entity = '$this->entity' AND b.fk_account = ba.rowid ORDER BY b.dateo ASC";
 		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while($data = mysqli_fetch_array($res, MYSQLI_ASSOC)){
 			$date = explode("-", $data['dateo']);
@@ -375,6 +375,17 @@ class initialisation extends CommonObject
 		$tab_20 = array();
 		$tableau_achat_20 = array();
 		$tableau_achat_10 = array();
+		$tab_select = array();
+		while($data = mysqli_fetch_array($res, MYSQLI_ASSOC)){
+			$date = explode("-", $data['dateo']);
+			$dates = $date[0]."-".$date[1];
+			$tab_select[$dates] += $data['amount'];
+			$tableau_montant_categorie[$dates] += $data['amount']*(100/(20+100));
+			$tableau_achat_20[$dates] += $data['amount'];
+			$tab_20[$dates] += $data['amount'];
+		}
+		$sql = "SELECT b.amount, b.dateo, bc.fk_categ FROM llx_bank as b, llx_bank_account as ba, llx_bank_class as bc where b.amount <= 0 AND ba.entity = '1' AND b.rowid = bc.lineid AND  bc.fk_categ NOT IN (select bcat.rowid FROM llx_bank_categ as bcat) ORDER BY b.dateo ASC";
+		$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
 		while($data = mysqli_fetch_array($res, MYSQLI_ASSOC)){
 			$date = explode("-", $data['dateo']);
 			$dates = $date[0]."-".$date[1];
@@ -417,7 +428,6 @@ class initialisation extends CommonObject
 		}
 		$tableau_des_dates[] = array();
 		$tab_insert = array();
-		//$tab_select = array();
 		foreach ($tableau_montant_categorie as $date => $tableau_categ) {
 			if (empty($tableau_categ)) {
 				$query = "UPDATE llx_tresorerie SET achat = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-28' AND type='reel';";
@@ -517,6 +527,10 @@ class initialisation extends CommonObject
 	/**
 	 *	This method calculate the cash balance and update database
 	 *
+	 *	@param array $tab_ca array with amount of turnover
+	 *	@param array $tab_achat array with amount of purchase
+	 *	@param array $tab_charge array with amount of fixed charges
+	 *	@param array $tab_achat array with higher amount  and have category
 	 *	@return void
 	 */
 	public function calcul_solde_tresorerie($tab_ca, $tab_achat, $tab_charge, $tab_valeur_sup)
@@ -531,7 +545,6 @@ class initialisation extends CommonObject
 			$query_init_solde = "UPDATE llx_tresorerie SET soldeDebut = '".$data['amount']."' WHERE date >= '".$dat[0]."-".$dat[1]."-01' AND date <= '".$dat[0]."-".$dat[1]."-28' AND type='reel';";
 			mysqli_query($this->link, $query_init_solde)or die(mysqli_error($this->link));
 		}
-		print_r($tab_sold_init);
 		for ($i=$annee; $i <= date("Y") ; $i++) { 
 			for ($j=1; $j <= 12 ; $j++) { 
 				if ($j<10) {
@@ -547,8 +560,9 @@ class initialisation extends CommonObject
 						$queryDebut = "UPDATE llx_tresorerie SET soldeDebut = '".$tab_sold_init[$date]."' WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
 					}
 					elseif ($date<= date("Y-m")) {
+						//echo "<br> val : ".$tab_valeur_sup[$date]." ca : ".$tab_ca[$date]." achat : ".$tab_achat[$date]." charge :".$tab_charge[$date]." date : ".$date."<br>";
 						$queryDebut = "UPDATE llx_tresorerie SET soldeDebut = ".$le_calcul." WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
-						$le_calcul = round($le_calcul+$tab_ca[$date]+$tab_achat[$date]+$tab_charge[$date]+$tab_valeur_sup[$date], 2);
+						$le_calcul = round($le_calcul+$tab_ca[$date]+$tab_valeur_sup[$date]+$tab_achat[$date]+$tab_charge[$date], 2);
 						$queryCourant = "UPDATE llx_tresorerie SET soldeCourant = ".$le_calcul." WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
 					}
 				}

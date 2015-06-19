@@ -27,8 +27,19 @@
  */
 class connect
 {
+	/**
+	 * @var object $link the link of database
+	 */
 	var $link;
 
+	/**
+	 *	This is the contructor of class, create a link of database
+	 *  
+	 *	@param string $dolibarr_main_db_host name of host database
+	 *	@param string $dolibarr_main_db_name name of database
+	 *	@param string $dolibarr_main_db_user name of user database
+	 *	@param string $dolibarr_main_db_pass the password of database
+	 */
 	function __construct($dolibarr_main_db_host, $dolibarr_main_db_name, $dolibarr_main_db_user ,$dolibarr_main_db_pass)
 	{
 		if (!empty($dolibarr_main_db_name) && !empty($dolibarr_main_db_host) && !empty($dolibarr_main_db_user)) {

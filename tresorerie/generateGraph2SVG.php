@@ -1,4 +1,18 @@
 <?php
+/**
+ *	This file create the graph to svg
+ */
+
+/**
+ *	This is used for create the graph on svg
+ *
+ *	@filesource /htdocs/tresorerie/generateGraph2SVG.php
+ *	@package /
+ *	@licence http://www.gnu.org/licenses/ GPL
+ *	@version Version 1.0
+ *	@author Maël Quémard
+ */
+
 $res=0;
 if (! $res && file_exists("../main.inc.php")) $res=@include '../main.inc.php';
 if (! $res && file_exists("../../main.inc.php")) $res=@include '../../main.inc.php';

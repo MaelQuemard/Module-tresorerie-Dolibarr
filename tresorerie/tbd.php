@@ -85,18 +85,36 @@ $form=new Form($db);
 // Put here content of your page
 $connect = new connect($dolibarr_main_db_host, $dolibarr_main_db_name, $dolibarr_main_db_user ,$dolibarr_main_db_pass);
 $link = $connect->link();
+?>
+<script>
+    function ReloadPage() { 
+       location.reload(true);
+    };
+
+    function test(){
+      setTimeout("ReloadPage()", 100);
+    };
+</script>
+<?php
 $moisM = date("m");
 $annee = date("Y");
 
 $tresorerie = new tresorerie($link);
 $nb_lignes = $tresorerie->getNbLignes();
 $categorie = $tresorerie->getCategorie();
+$taux = $tresorerie->getTaux();
 $search = array(',', '-', '(', ')', ' ', '/', "'", '+');
 $replace = array("");
 $categorie2 = array();
-for ($i=0; $i <= $nb_lignes; $i++) { 
+for ($j=0; $j < 24; $j++) {
+	$est_passer_v0 = false;
+	$est_passer_v10 = false;
+	$est_passer_v20 = false;
+	$est_passer_a0 = false;
+	$est_passer_a10 = false;
+	$est_passer_a20 = false;
 	$categorie2[$i] = str_replace($search, $replace, $categorie[$i]);
-	for ($j=0; $j < 24; $j++) {	
+	for ($i=0; $i <= $nb_lignes; $i++) { 
 		if (isset($_POST["$categorie2[$i];$i;$j"])) {
 			$tresorerie->setPrevisionel($_POST["$categorie2[$i];$i;$j"]);
 		}
@@ -113,22 +131,40 @@ for ($i=0; $i <= $nb_lignes; $i++) {
 			$tresorerie->setPrevisionel($_POST["CA;$j"]);
 		}
 		if (isset($_POST["CAVentes0;$j"])) {
-			$tresorerie->setPrevisionel($_POST["CAVentes0;$j"]);
+			if (!$est_passer_v0) {
+				$tresorerie->setPrevisionel($_POST["CAVentes0;$j"]);
+				$est_passer_v0 = true;
+			}
 		}
 		if (isset($_POST["CAVentes10;$j"])) {
-			$tresorerie->setPrevisionel($_POST["CAVentes10;$j"]);
+			if (!$est_passer_v10) {
+				$tresorerie->setPrevisionel($_POST["CAVentes10;$j"]);
+				$est_passer_v10 = true;
+			}
 		}
 		if (isset($_POST["CAVentes20;$j"])) {
-			$tresorerie->setPrevisionel($_POST["CAVentes20;$j"]);
+			if (!$est_passer_v20) {
+				$tresorerie->setPrevisionel($_POST["CAVentes20;$j"]);
+				$est_passer_v20 = true;
+			}
 		}
 		if (isset($_POST["Achats0;$j"])) {
-			$tresorerie->setPrevisionel($_POST["Achats0;$j"]);
+			if (!$est_passer_a0) {
+				$tresorerie->setPrevisionel($_POST["Achats0;$j"]);
+				$est_passer_a0 = true;
+			}
 		}
 		if (isset($_POST["Achats10;$j"])) {
-			$tresorerie->setPrevisionel($_POST["Achats10;$j"]);
+			if (!$est_passer_a10) {
+				$tresorerie->setPrevisionel($_POST["Achats10;$j"]);
+				$est_passer_a10 = true;
+			}
 		}
 		if (isset($_POST["Achats20;$j"])) {
-			$tresorerie->setPrevisionel($_POST["Achats20;$j"]);
+			if (!$est_passer_a20) {
+				$tresorerie->setPrevisionel($_POST["Achats20;$j"]);
+				$est_passer_a20 = true;
+			}
 		}	
 	}
 }
@@ -148,16 +184,12 @@ if (isset($_GET['synchro'])) {
 	$tresorerie->Upsert($tCharge, $solde, $ca, $ca_0, $ca_10, $ca_20, $achat, $achat_0, $achat_10, $achat_20, $mCateg, $categorie);
 }
 
-
-$taux = $tresorerie->getTaux();
 if(isset($_GET['re'])){
 	$tresoPrev = $tresorerie->getTresorerie_Prev_HT($taux, $_GET['re']);
 	$tresoReel =$tresorerie->getTresorerie_Reel_HT($taux, $_GET['re']);
 	$charge_total = $tresorerie->getCharge($categorie, $taux, $_GET['re']);
 	$charge_total_prev = $tresorerie->getChargePrev($categorie, $taux, $_GET['re']);
-	if (isset($_GET['synchro'])) {
-		$tresorerie->calcul_solde_tresorerie_prev($categorie, $taux, $_GET['re']);
-	}
+	$tresorerie->calcul_solde_tresorerie_prev($categorie, $taux, $_GET['re']);
 	$pourcentage_ca_par_ca_n_moins_1 = $tresorerie->calcul_pourcentage_ca_par_ca_n_moins_1($_GET['re']);
 	$taux_de_marge = $tresorerie->calcul_taux_de_marge($_GET['re']);
 	$cumul = $tresorerie->calcul_ca_cumule($_GET['re']);
@@ -180,9 +212,7 @@ else{
 	$tresoReel =$tresorerie->getTresorerie_Reel_HT($taux);
 	$charge_total = $tresorerie->getCharge($categorie, $taux);
 	$charge_total_prev = $tresorerie->getChargePrev($categorie, $taux);
-	if (isset($_GET['synchro'])) {
-		$tresorerie->calcul_solde_tresorerie_prev($categorie, $taux);
-	}
+	$tresorerie->calcul_solde_tresorerie_prev($categorie, $taux);
 	$pourcentage_ca_par_ca_n_moins_1 = $tresorerie->calcul_pourcentage_ca_par_ca_n_moins_1();
 	$taux_de_marge = $tresorerie->calcul_taux_de_marge();
 	$cumul = $tresorerie->calcul_ca_cumule();
@@ -233,7 +263,7 @@ $moisPrecedent = array();
                 <td class="nobordernopadding">
                 <form action="#">
                 	<input type="hidden" name="account" value="1"></input>
-                	<input type="submit" name="synchro" value="Sychroniser"></input>
+                	<input type="submit" name="synchro" value="Synchroniser"></input>
                 </form>
                 </td>
                 <td class="nobordernopadding">
@@ -1306,7 +1336,9 @@ $moisPrecedent = array();
 	                    </tr>
                 </tbody>
             </table>
-            <input type="submit" id="button">
+            <div id="blockvmenusearch" class="blockvmenusearch" style="background-color:transparent; border-color:transparent; box-shadow:none;">
+            <input type="submit" value="Valider le prévisionnel" id="blockvmenusearch"  class="button" style="width:100%; margin-left:100%;" onclick="test()">
+            </div>
         </form>
     </div>
     </div>

@@ -14,6 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+/**
+ *	This file is activate module
+ */
 
 /**
  * 	\defgroup   Tresorerie     Module Tresorerie
@@ -24,7 +27,6 @@
  *  \brief      Description and activation file for module Tresorerie
  */
 include_once DOL_DOCUMENT_ROOT .'/core/modules/DolibarrModules.class.php';
-//include_once DOL_DOCUMENT_ROOT .'/tresorerie/genereSQL.php';
 /**
  *  Description and activation class for module Tresorerie
  */
@@ -32,8 +34,7 @@ class modTresorerie extends DolibarrModules
 {
 	/**
 	 *   Constructor. Define names, constants, directories, boxes, permissions
-	 *
-	 *   @param      DoliDB		$db      Database handler
+	 *	@param object $db
 	 */
 	function __construct($db)
 	{

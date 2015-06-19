@@ -14,6 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+/**
+ *	This file is used for the dashboard
+ */
 
 /**
  *	Class tresorerie is used for everything related to the dashboard
@@ -26,20 +29,65 @@
  */
 class tresorerie extends CommonObject
 {
+	/** 
+	*	@var double $solde the cashbalance
+	*/
 	var $solde;
+	/** 
+	*	@var date $date	the date
+	*/
 	var $date;
+	/** 
+	*	@var date $dateD the date of begin
+	*/
 	var $dateD;
+	/** 
+	*	@var double $charge the fixed charges
+	*/
 	var $charge;
+	/** 
+	*	@var array $charge_reel the fixed charges real
+	*/
 	var $charge_reel = array();
+	/** 
+	*	@var array $charge_prev the fixed charges preview
+	*/
 	var $charge_prev = array();
+	/** 
+	*	@var array $montant_Categ  the amount of category
+	*/
 	var $montant_Categ = array();
+	/** 
+	*	@var double $ca the turnover
+	*/
 	var $ca;
+	/** 
+	*	@var double $achat the purchase
+	*/
 	var $achat;
+	/** 
+	*	@var int $entity the number of entity
+	*/
 	var $entity;
+	/** 
+	*	@var array $categorie the array of category
+	*/
 	var $categorie = array();
+	/** 
+	*	@var array $tresoReel the array of cash real
+	*/
 	var $tresoReel = array();
+	/** 
+	*	@var array $tresoPrev the array of cash preview
+	*/
 	var $tresoPrev = array();
+	/** 
+	*	@var array $taux the rate of category
+	*/
 	var $taux = array();
+	/** 
+	*	@var object $link  the link of database
+	*/
 	var $link;
 
 	/**
@@ -146,6 +194,11 @@ class tresorerie extends CommonObject
 		return $this->ca;
 	}
 
+	/**
+	 *	This method get turnover at ten percent
+	 *
+	 *	@return double $ca_10
+	 */
 	public function getCA_10()
 	{
 		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 10';";
@@ -156,6 +209,11 @@ class tresorerie extends CommonObject
 		return $ca_10;
 	}
 
+	/**
+	 *	This method get turnover at twenty percent
+	 *
+	 *	@return double $ca_20
+	 */
 	public function getCA_20()
 	{
 		$sql = "SELECT DISTINCT b.amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount >= 0 AND b.dateo <= '$this->date'AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity';";
@@ -171,6 +229,11 @@ class tresorerie extends CommonObject
 		return $ca_20;
 	}
 
+	/**
+	 *	This method get turnover at zero percent
+	 *
+	 *	@return double $ca_0
+	 */
 	public function getCA_0()
 	{
 		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'CA Ventes 0';";
@@ -212,6 +275,11 @@ class tresorerie extends CommonObject
 		return $this->achat;
 	}
 
+	/**
+	 *	This method get purchase at ten percent
+	 *
+	 *	@return double $achat_10
+	 */
 	public function getAchat_10()
 	{
 		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 10';";
@@ -222,6 +290,11 @@ class tresorerie extends CommonObject
 		return $achat_10;
 	}
 
+	/**
+	 *	This method get purchase at twenty percent
+	 *
+	 *	@return double $achat_20
+	 */
 	public function getAchat_20()
 	{
 		$sql = "SELECT DISTINCT b.amount FROM ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."bank_account as ba where b.rowid NOT IN (select bclass.lineid FROM ".MAIN_DB_PREFIX."bank_class as bclass) AND b.amount < 0 AND b.dateo <= '$this->date'AND b.dateo >= '$this->dateD-01' AND ba.entity = '$this->entity';";
@@ -237,6 +310,11 @@ class tresorerie extends CommonObject
 		return $achat_20;
 	}
 
+	/**
+	 *	This method get purchase at zero percent
+	 *
+	 *	@return double $achat_0
+	 */
 	public function getAchat_0()
 	{
 		$sql = "SELECT DISTINCT bcat.label, b.amount FROM ".MAIN_DB_PREFIX."bank_categ as bcat, ".MAIN_DB_PREFIX."bank_class as bclass, ".MAIN_DB_PREFIX."bank_account as ba, ".MAIN_DB_PREFIX."bank as b, ".MAIN_DB_PREFIX."categ_tva as ct, ".MAIN_DB_PREFIX."c_tva as t WHERE ba.rowid=b.fk_account AND bcat.rowid = bclass.fk_categ AND ba.entity = '$this->entity' AND bclass.lineid = b.rowid AND b.dateo <= '$this->date' AND b.dateo >= '$this->dateD-01' AND ct.fk_c_tva = t.rowid AND bcat.label = 'Achats 0';";
@@ -312,7 +390,13 @@ class tresorerie extends CommonObject
 	 *	@param array $Tcharge
 	 *	@param double $solde
 	 *	@param double $ca
+	 *	@param double $ca_0
+	 *	@param double $ca_10
+	 *	@param double $ca_20
 	 *	@param double $achat
+	 *	@param double $achat_0
+	 *	@param double $achat_10
+	 *	@param double $achat_20
 	 *	@param array $Mcharge
 	 *
 	 *	@param array $categ
@@ -589,6 +673,40 @@ class tresorerie extends CommonObject
 			}
 			if (!strstr("-", $info[0]) && $info[0]!="NULL" && $info[1]!="CA"  && $info[1]!="CAVentes0"  && $info[1]!="CAVentes10"  && $info[1]!="CAVentes20") {
 				$info[0] = "-".$info[0];
+			}
+			if ($info[1]=="CAVentes0" || $info[1]=="CAVentes10" || $info[1]=="CAVentes20") {
+				$sql = "SELECT CA FROM llx_tresorerie WHERE date BETWEEN '$info_date_D' AND '$info_date_F' AND type='prev';";
+				$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+				while ($data = mysqli_fetch_assoc($res)) {
+					$ca = $data['CA'] + $info[0];
+				}
+				if ($info[0]=="NULL") {
+					$sql = "SELECT ".$info[1]." FROM llx_tresorerie where type ='prev' AND date BETWEEN '$info_date_D' AND '$info_date_F';";
+					$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+					while ($data = mysqli_fetch_assoc($res)) {
+						$ca = $ca - $data[$info[1]];
+					}
+				}
+				$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET CA = '".$ca."', type='prev' WHERE type='prev' AND date BETWEEN '$info_date_D' AND '$info_date_F';";
+				mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+				mysqli_commit($this->link);			
+			}
+			if ($info[1]=="Achats0" || $info[1]=="Achats10" || $info[1]=="Achats20") {
+				$sql = "SELECT achat FROM llx_tresorerie WHERE date BETWEEN '$info_date_D' AND '$info_date_F' AND type='prev';";
+				$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+				while ($data = mysqli_fetch_assoc($res)) {
+					$achat = $data['achat'] + $info[0];
+				}
+				if ($info[0]=="NULL") {
+					$sql = "SELECT ".$info[1]." FROM llx_tresorerie where type ='prev' AND date BETWEEN '$info_date_D' AND '$info_date_F';";
+					$res = mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+					while ($data = mysqli_fetch_assoc($res)) {
+						$achat = $achat - $data[$info[1]];
+					}
+				}
+				$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET achat = '".$achat."', type='prev' WHERE type='prev' AND date BETWEEN '$info_date_D' AND '$info_date_F';";
+				mysqli_query($this->link, $sql) or die (mysqli_error($this->link));
+				mysqli_commit($this->link);			
 			}
 			$sql = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET $info[1]=$info[0], type='prev' WHERE type='prev' AND date BETWEEN '$info_date_D' AND '$info_date_F';";
 			mysqli_query($this->link, $sql) or die (mysqli_error($this->link));

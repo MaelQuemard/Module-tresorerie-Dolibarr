@@ -14,14 +14,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+/**
+ *	This file is used for change the table of database
+ */
 
 /**
- *	\file       htdocs/tresorerie/class/initialisation.php
- *	\ingroup    tresorerie
- *	\brief      File to initialisation the module of tresorerie
+ *	Class tresorerie is used for everything related to the dashboard
+ *
+ *	@filesource /htdocs/tresorerie/class/modificationTable.php
+ *	@package Class
+ *	@licence http://www.gnu.org/licenses/ GPL
+ *	@version Version 1.0
+ *	@author Maël Quémard
  */
 class modificationTable extends CommonObject
 {
+	/**
+	 *	This is the contructor of class, get the link of connection (database)
+	 *	
+	 *	@param Object $leink
+	 *	@global object $conf
+	 *	@global object $langs
+	 *	@var int $this->entity number of entity
+	 */
 	function __construct($leink)
 	{
 		global $conf, $langs;
@@ -29,6 +44,11 @@ class modificationTable extends CommonObject
 		$this->entity = $conf->entity;
 	}
 
+	/**
+	 *	This method get name of category (fixed charges)
+	 *
+	 *	@return array $this->categorie
+	 */
 	public function getCategorie()
 	{
 		$query_categ = "SELECT label FROM `llx_bank_categ` ORDER BY `label` ASC;";
@@ -39,6 +59,11 @@ class modificationTable extends CommonObject
 		return $this->categorie;
 	}
 
+	/**
+	 *	This method get lines numbers in table bank_categ
+	 *
+	 *	@return int $nb
+	 */
 	public function getNbLignes()
 	{
 		$query_categ = "SELECT label FROM `llx_bank_categ` ORDER BY `label` ASC;";
@@ -47,6 +72,11 @@ class modificationTable extends CommonObject
 		return $nb;
 	}
 
+	/**
+	 *	This method adds the category on the table llx_tresorerie
+	 *
+	 *	@param array $categ
+	 */
 	public function ajoutCategorie($categ)
 	{
 		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
@@ -71,6 +101,11 @@ class modificationTable extends CommonObject
 		}
 	}
 
+	/**
+	 *	This method remove the category on the table llx_tresorerie
+	 *
+	 *	@param array $categ
+	 */
 	public function supprimerCategorie($categ)
 	{
 		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
