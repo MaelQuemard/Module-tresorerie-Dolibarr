@@ -1,8 +1,8 @@
 				----------------------------------------------
-				|					     |
-				| 	         Instructions		     |
-				|				  	     |
-				|	           à suivre		     |
+				|					     					 |
+				| 	         Instructions		  			 |
+				|				  	    					 |
+				|	           à suivre		     			 |
 				|____________________________________________|
 
 Pour installer le module de trésorerie veuillez suivre les étape suivantes :
