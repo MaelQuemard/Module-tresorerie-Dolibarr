@@ -904,7 +904,7 @@ class tresorerie extends CommonObject
 						if ($categ == $les_categ && $categ != "CAVentes10" && $categ != "CAVentes20" && $categ != "CAVentes0" && $categ != "Achats10" && $categ != "Achats20" && $categ != "Achats0") {
 							foreach ($taux as $la_categ => $le_taux) {
 								if ($la_categ == $categ && $categ != "TVA") {
-									$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value*(100/($le_taux+100));
+									$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value*((100+$le_taux)/100);
 								}
 								elseif($categ == "TVA" && $la_categ == $categ){
 									$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value;
