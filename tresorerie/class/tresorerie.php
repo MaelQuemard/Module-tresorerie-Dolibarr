@@ -849,39 +849,49 @@ class tresorerie extends CommonObject
 	{
 		$search = array(',', '-', '(', ')', ' ', '/', "'", '+');
 		$replace = array("");
-
 		if ($date_param == 0) {
-			$date_temp_demande = $this->dateD;
+			if (date("m")<=10) {
+				$date_temp_demande = date("Y")."-0".(date("m")+1);
+			}
+			else{
+				$date_temp_demande = date("Y")."-".(date("m")+1);
+			}
 		}
 		else{
 			$date_decoupe = explode("/", $date_param);
 			$date = "$date_decoupe[2]-$date_decoupe[1]-$date_decoupe[0]";
 			$date_temp_demande = "$date_decoupe[2]-$date_decoupe[1]";
 		}
-
-		$query_1 = "SELECT soldeDebut, date FROM ".MAIN_DB_PREFIX."tresorerie WHERE date>='".date("Y")."-01-01' AND type='reel'";
-		$res_1 = mysqli_query($this->link, $query_1)or die(mysqli_error($this->link));
-
 		$tab_tout = array();
 		$tab_solde_prev = array();
 		$solde_courant_reel = array();
-		$i = 0;
 		$ok = false;
 		$query = "SELECT * FROM ".MAIN_DB_PREFIX."tresorerie WHERE date>='".date("Y")."-01-01' AND type ='prev' ORDER BY date ASC";
 		$res = mysqli_query($this->link, $query)or die(mysqli_error($this->link));
 		while ($data = mysqli_fetch_array($res, MYSQLI_ASSOC)) {
 			$tab_tout[] = $data;
 		}
-		while ($soldeDebut = mysqli_fetch_assoc($res_1)) {
-			$solde_courant_reel[$soldeDebut['date']] = $soldeDebut['soldeDebut'];
-		}
 		foreach ($tab_tout as $categorie_du_mois => $valeur) {
-			$_les_dates_treso = explode("-",$valeur['date']);
+			$_les_dates_treso = explode("-",$valeur['date']);	
 			if (($_les_dates_treso[0]."-".$_les_dates_treso[1]) >= $date_temp_demande) {
+				if ($_les_dates_treso[1]==1) {
+					$date_temp_a = ($_les_dates_treso[0]-1)."-12";
+				}
+				elseif ($_les_dates_treso[1]<=10) {
+					$date_temp_a = $_les_dates_treso[0]."-0".($_les_dates_treso[1]-1);
+				}
+				elseif ($_les_dates_treso[1]>10){
+					$date_temp_a = ($_les_dates_treso[0]."-".($_les_dates_treso[1]-1));
+				}
+				$query_1 = "SELECT soldeCourant, date FROM ".MAIN_DB_PREFIX."tresorerie WHERE date>='".$date_temp_a."-01' AND type='prev'";
+				$res_1 = mysqli_query($this->link, $query_1)or die(mysqli_error($this->link));
+				while ($soldeDebut = mysqli_fetch_assoc($res_1)) {
+					$solde_courant_reel[$soldeDebut['date']] = $soldeDebut['soldeCourant'];
+				}
 				foreach ($valeur as $les_categ => $value) {
 					foreach ($solde_courant_reel as $key => $valueSoldeCourant) {
 						$key = explode("-",$key);
-						if (($key[0]."-".$key[1]) == ($_les_dates_treso[0]."-".$_les_dates_treso[1]) && !$ok) {
+						if (($key[0]."-".$key[1]) == $date_temp_a && !$ok) {
 							$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] = $valueSoldeCourant;
 							$ok=true;
 							$query_update_solde_debut = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET soldeDebut = '".$valueSoldeCourant."' WHERE date >= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-01' AND date <= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-28' AND type = 'prev';";
@@ -892,13 +902,32 @@ class tresorerie extends CommonObject
 					foreach ($categorie as $categ) {
 						$categ = str_replace($search, $replace, $categ);
 						if ($categ == $les_categ && $categ != "CAVentes10" && $categ != "CAVentes20" && $categ != "CAVentes0" && $categ != "Achats10" && $categ != "Achats20" && $categ != "Achats0") {
-							$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value;
+							foreach ($taux as $la_categ => $le_taux) {
+								if ($la_categ == $categ && $categ != "TVA") {
+									$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value*(100/($le_taux+100));
+								}
+								elseif($categ == "TVA" && $la_categ == $categ){
+									$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value;
+								}
+							}
 						}
 					}
-					if ($les_categ == "CA") {
+					if ($les_categ == "CAVentes20") {
+						$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value*1.2;
+					}
+					if ($les_categ == "CAVentes10") {
+						$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value*1.1;
+					}
+					if ($les_categ == "CAVentes0") {
 						$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value;
 					}
-					elseif ($les_categ == "achat") {
+					if ($les_categ == "Achats20") {
+						$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value*1.2;
+					}
+					if ($les_categ == "Achats10") {
+						$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value*1.1;
+					}
+					if ($les_categ == "Achats0") {
 						$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]] += $value;
 					}
 				}
@@ -906,8 +935,9 @@ class tresorerie extends CommonObject
 				$query_update_solde_courant = "UPDATE ".MAIN_DB_PREFIX."tresorerie SET soldeCourant = '".$tab_solde_prev[$_les_dates_treso[0]."-".$_les_dates_treso[1]]."' WHERE date >= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-01' AND date <= '".($_les_dates_treso[0]."-".$_les_dates_treso[1])."-28' AND type = 'prev';";
 				mysqli_query($this->link, $query_update_solde_courant);
 				mysqli_commit($this->link);
+
 			}
-		}			
+		}
 	}
 
 	/**

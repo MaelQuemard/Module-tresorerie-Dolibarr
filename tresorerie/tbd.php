@@ -85,17 +85,6 @@ $form=new Form($db);
 // Put here content of your page
 $connect = new connect($dolibarr_main_db_host, $dolibarr_main_db_name, $dolibarr_main_db_user ,$dolibarr_main_db_pass);
 $link = $connect->link();
-?>
-<script>
-    function ReloadPage() { 
-       location.reload(true);
-    };
-
-    function test(){
-      setTimeout("ReloadPage()", 100);
-    };
-</script>
-<?php
 $moisM = date("m");
 $annee = date("Y");
 
@@ -113,8 +102,8 @@ for ($j=0; $j < 24; $j++) {
 	$est_passer_a0 = false;
 	$est_passer_a10 = false;
 	$est_passer_a20 = false;
-	$categorie2[$i] = str_replace($search, $replace, $categorie[$i]);
-	for ($i=0; $i <= $nb_lignes; $i++) { 
+	for ($i=0; $i <= $nb_lignes; $i++) {
+		$categorie2[$i] = str_replace($search, $replace, $categorie[$i]);
 		if (isset($_POST["$categorie2[$i];$i;$j"])) {
 			$tresorerie->setPrevisionel($_POST["$categorie2[$i];$i;$j"]);
 		}
@@ -250,7 +239,6 @@ $mois = array("Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", 
 $moisPrecedent = array();
 ?>
 	<script type="text/javascript" src="js/script.js"></script>
-	<script type="text/javascript" src="js/coloration.js"></script>
     <table class="notopnoleftnoright" border="0" style="margin-bottom: 2px;">
         <tbody>
             <tr>
@@ -381,12 +369,12 @@ $moisPrecedent = array();
 														$date_test[1]++;
 													}
 													if ($j<=23) {
-														if($value!=0){
-			                    							echo "<td>"./*round(*/price($value)/*, 2)*/."</td>";
-			                    						}
-			                    						else{
-			                    							echo "<td></td>";
-			                    						}
+														//if($value!=0){
+			                    							echo "<td>".price(round($value, 2))."</td>";
+			                    						//}
+			                    						//else{
+			                    						//	echo "<td></td>";
+			                    						//}
 													}
 	                    							$j++;
 	                    						}
@@ -1516,7 +1504,6 @@ jQuery(document).ready(function() {
 	});
 });
 </script>';
-
 
 // Example 2 : Adding links to objects
 // The class must extends CommonObject class to have this method available
