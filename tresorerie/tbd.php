@@ -1050,11 +1050,11 @@ $moisPrecedent = array();
 				                            if ($j==26) {
 				                            	foreach ($pourcentage_cumul_charge as $categ => $value) {
 				                            		if ($categ == $categorie[$i]) {
-				                            			if ($value > 0) {
-				                            				echo "<td style='color:red'>".round($value,2)."</td>";
+				                            			if ($value >= 0) {
+				                            				echo "<td style='color:green'>".round($value,2)."</td>";
 				                            			}
 				                            			else{
-				                            				echo "<td style='color:green'>".round($value,2)."</td>";
+				                            				echo "<td style='color:red'>".round($value,2)."</td>";
 				                            			}
 				                            		}
 				                            	}
