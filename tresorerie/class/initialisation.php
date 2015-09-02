@@ -326,36 +326,47 @@ class initialisation extends CommonObject
 		}
 		$tableau_des_dates[] = array();
 		$tab_insert = array();
-		
 		foreach ($tableau_montant_categorie as $date => $tableau_categ) {
+			$month = explode("-", $date)[1];
+			$years = explode("-", $date)[0];
+			$nb_jours = date("t", mktime(0,0,0,$month, 1, $years));
 			if (empty($tableau_categ)) {
-				$query = "UPDATE llx_tresorerie SET CA = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET CA = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}else{
-				$query = "UPDATE llx_tresorerie SET CA = ".$tableau_categ." WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET CA = ".$tableau_categ." WHERE date >= '".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}
 			mysqli_query($this->link, $query);
 		}
 		foreach ($tableau_ca_10 as $date => $value) {
+			$month = explode("-", $date)[1];
+			$years = explode("-", $date)[0];
+			$nb_jours = date("t", mktime(0,0,0,$month, 1, $years));
 			if (empty($value)) {
-				$query = "UPDATE llx_tresorerie SET CAVentes10 = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET CAVentes10 = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}else{
-				$query = "UPDATE llx_tresorerie SET CAVentes10 = ".$value." WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET CAVentes10 = ".$value." WHERE date >= '".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}
 			mysqli_query($this->link, $query);
 		}
 		foreach ($tableau_ca_20 as $date => $value) {
+			$month = explode("-", $date)[1];
+			$years = explode("-", $date)[0];
+			$nb_jours = date("t", mktime(0,0,0,$month, 1, $years));
 			if (empty($value)) {
-				$query = "UPDATE llx_tresorerie SET CAVentes20 = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET CAVentes20 = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}else{
-				$query = "UPDATE llx_tresorerie SET CAVentes20 = ".$value." WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET CAVentes20 = ".$value." WHERE date >= '".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}
 			mysqli_query($this->link, $query);
 		}
 		foreach ($tableau_ca_0 as $date => $value) {
+			$month = explode("-", $date)[1];
+			$years = explode("-", $date)[0];
+			$nb_jours = date("t", mktime(0,0,0,$month, 1, $years));
 			if (empty($value)) {
-				$query = "UPDATE llx_tresorerie SET CAVentes0 = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET CAVentes0 = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}else{
-				$query = "UPDATE llx_tresorerie SET CAVentes0 = ".$value." WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET CAVentes0 = ".$value." WHERE date >= '".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}
 			mysqli_query($this->link, $query);
 		}
@@ -429,34 +440,46 @@ class initialisation extends CommonObject
 		$tableau_des_dates[] = array();
 		$tab_insert = array();
 		foreach ($tableau_montant_categorie as $date => $tableau_categ) {
+			$month = explode("-", $date)[1];
+			$years = explode("-", $date)[0];
+			$nb_jours = date("t", mktime(0,0,0,$month, 1, $years));
 			if (empty($tableau_categ)) {
-				$query = "UPDATE llx_tresorerie SET achat = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET achat = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}else{
-				$query = "UPDATE llx_tresorerie SET achat = ".$tableau_categ." WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET achat = ".$tableau_categ." WHERE date >= '".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}
 			mysqli_query($this->link, $query);
 		}
 		foreach ($tableau_achat_10 as $date => $value) {
+			$month = explode("-", $date)[1];
+			$years = explode("-", $date)[0];
+			$nb_jours = date("t", mktime(0,0,0,$month, 1, $years));
 			if (empty($value)) {
-				$query = "UPDATE llx_tresorerie SET Achats10 = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET Achats10 = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}else{
-				$query = "UPDATE llx_tresorerie SET Achats10 = ".$value." WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET Achats10 = ".$value." WHERE date >= '".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}
 			mysqli_query($this->link, $query);
 		}
 		foreach ($tableau_achat_20 as $date => $value) {
+			$month = explode("-", $date)[1];
+			$years = explode("-", $date)[0];
+			$nb_jours = date("t", mktime(0,0,0,$month, 1, $years));
 			if (empty($value)) {
-				$query = "UPDATE llx_tresorerie SET Achats20 = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET Achats20 = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}else{
-				$query = "UPDATE llx_tresorerie SET Achats20 = ".$value." WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET Achats20 = ".$value." WHERE date >= '".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}
 			mysqli_query($this->link, $query);
 		}
 		foreach ($tableau_achat_0 as $date => $value) {
+			$month = explode("-", $date)[1];
+			$years = explode("-", $date)[0];
+			$nb_jours = date("t", mktime(0,0,0,$month, 1, $years));
 			if (empty($value)) {
-				$query = "UPDATE llx_tresorerie SET Achats0 = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET Achats0 = NULL WHERE "."date >='".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}else{
-				$query = "UPDATE llx_tresorerie SET Achats0 = ".$value." WHERE date >= '".$date."-01' AND date <= '".$date."-28' AND type='reel';";
+				$query = "UPDATE llx_tresorerie SET Achats0 = ".$value." WHERE date >= '".$date."-01' AND date <= '".$date."-".$nb_jours."' AND type='reel';";
 			}
 			mysqli_query($this->link, $query);
 		}
